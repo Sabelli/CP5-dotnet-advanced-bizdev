@@ -43,7 +43,7 @@ CP5-dotnet-advanced-bizdev/
 │   └── UseCases/                         # AutorUseCase, CategoriaUseCase, LivroUseCase, EmprestimoUseCase, UserUseCase
 ├── Biblioteca.Domain/                    # sem dependências de framework
 │   ├── Entities/                         # *Entity, OperationResult<T>, EdicaoLivroModel
-│   ├── Errors/                           # NoContentException
+│   ├── Errors/                           # NoContentException, ConflitoException, RequisicaoInvalidaException, NaoAutorizadoException, ServicoExternoException
 │   └── Interfaces/                       # repositórios, ILivroExternoService, ITokenService
 ├── Biblioteca.Infrastructure/            # EF Core + Oracle
 │   ├── Data/                             # ApplicationContext, Migrations, Repositories
@@ -256,7 +256,7 @@ A resposta deve trazer `Content-Encoding: gzip` (ou `br`, se negociado Brotli).
 | Empréstimos | qualquer usuário autenticado |
 | `api/user`, `api/auth`, `/health/*` | anônimos |
 
-Senhas armazenadas com PBKDF2-SHA256 (100 mil iterações, salt aleatório). Login com e-mail ou senha incorretos retorna 404.
+Senhas armazenadas com PBKDF2-SHA256 (100 mil iterações, salt aleatório). Login com e-mail ou senha incorretos retorna 401 ("E-mail ou senha incorretos.").
 
 ---
 
@@ -295,7 +295,7 @@ Todas exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth` e `/he
 
 | Método | Rota | Descrição | Retorno |
 |--------|------|-----------|---------|
-| POST | `/api/auth` | Login, devolve `jwt` | 200 / 404 (usuário ou senha inválidos) / 400 |
+| POST | `/api/auth` | Login, devolve `jwt` | 200 / 401 (e-mail ou senha incorretos) / 400 |
 
 ```json
 { "email": "maria@biblioteca.com", "senha": "Senha123" }
@@ -343,7 +343,7 @@ Todas exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth` e `/he
 |--------|------|-----------|--------|---------|
 | GET | `/api/livro` | Lista livros (paginado) | autenticado | 200 / 204 / 429 |
 | GET | `/api/livro/{id}` | Busca livro por id | autenticado | 200 / 404 |
-| GET | `/api/livro/isbn/{isbn}` | Consulta o livro no serviço externo (Open Library) | autenticado | 200 / 404 (ISBN não encontrado) / 400 |
+| GET | `/api/livro/isbn/{isbn}` | Consulta o livro no serviço externo (Open Library) | autenticado | 200 / 404 (ISBN não encontrado) / 400 / 502 (serviço externo indisponível) |
 | POST | `/api/livro` | Cria livro | admin | 201 / 404 (autor ou categoria inexistente) / 400 / 403 |
 | PUT | `/api/livro/{id}` | Atualiza livro | admin | 200 / 404 / 400 / 403 |
 | DELETE | `/api/livro/{id}` | Remove livro | admin | 200 / 404 / 403 |
@@ -401,3 +401,4 @@ A demonstração completa (Swagger com CRUD, `dotnet test` verde, erros 404/204/
 - E-mail de usuário é único (índice no banco e checagem na aplicação), com 409 em duplicata.
 - Todas as respostas usam DTOs dedicados (`Get*Dto`), nunca a entidade EF crua.
 - Repositories usam `AsNoTracking` e lançam `NoContentException`, que os UseCases convertem em `OperationResult`.
+- Regras de negócio lançam exceptions próprias com mensagem específica, que os UseCases convertem em `OperationResult` com o status correspondente: `ConflitoException` (409, ex.: "E-mail já cadastrado."), `RequisicaoInvalidaException` (400, ex.: "E-mail inválido."), `NaoAutorizadoException` (401) e `ServicoExternoException` (502).
