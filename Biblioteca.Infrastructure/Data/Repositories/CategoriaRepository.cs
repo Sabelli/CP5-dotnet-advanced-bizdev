@@ -22,7 +22,7 @@ public class CategoriaRepository : ICategoriaRepository
             if (RegistroRetornado <= 0) RegistroRetornado = 30;
 
             var total = await _context.Categoria.CountAsync();
-            var resultado = await _context.Categoria.OrderBy(x => x.Id).Skip(Deslocamento).Take(RegistroRetornado).ToListAsync();
+            var resultado = await _context.Categoria.AsNoTracking().OrderBy(x => x.Id).Skip(Deslocamento).Take(RegistroRetornado).ToListAsync();
 
             if (resultado.Count == 0)
                 throw new NoContentException("Não foram encontrados categorias");
@@ -37,7 +37,7 @@ public class CategoriaRepository : ICategoriaRepository
     {
         try
         {
-            var categoria = await _context.Categoria.FirstOrDefaultAsync(x => x.Id == Id);
+            var categoria = await _context.Categoria.AsNoTracking().FirstOrDefaultAsync(x => x.Id == Id);
             return categoria ?? throw new NoContentException($"Não foi encontrado categoria com o id {Id}");
         }
         catch (NoContentException ex) { throw new NoContentException(ex.Message); }

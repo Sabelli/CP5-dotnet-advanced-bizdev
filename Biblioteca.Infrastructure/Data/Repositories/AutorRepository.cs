@@ -22,7 +22,7 @@ public class AutorRepository : IAutorRepository
             if (RegistroRetornado <= 0) RegistroRetornado = 30;
 
             var total = await _context.Autor.CountAsync();
-            var resultado = await _context.Autor.OrderBy(x => x.Id).Skip(Deslocamento).Take(RegistroRetornado).ToListAsync();
+            var resultado = await _context.Autor.AsNoTracking().OrderBy(x => x.Id).Skip(Deslocamento).Take(RegistroRetornado).ToListAsync();
 
             if (resultado.Count == 0)
                 throw new NoContentException("Não foram encontrados autores");
@@ -37,7 +37,7 @@ public class AutorRepository : IAutorRepository
     {
         try
         {
-            var autor = await _context.Autor.FirstOrDefaultAsync(x => x.Id == Id);
+            var autor = await _context.Autor.AsNoTracking().FirstOrDefaultAsync(x => x.Id == Id);
             return autor ?? throw new NoContentException($"Não foi encontrado autor com o id {Id}");
         }
         catch (NoContentException ex) { throw new NoContentException(ex.Message); }

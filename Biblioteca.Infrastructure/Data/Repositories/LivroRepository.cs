@@ -23,6 +23,7 @@ public class LivroRepository : ILivroRepository
 
             var total = await _context.Livro.CountAsync();
             var resultado = await _context.Livro
+                .AsNoTracking()
                 .Include(x => x.Autor)
                 .Include(x => x.Categoria)
                 .OrderBy(x => x.Id)
@@ -44,6 +45,7 @@ public class LivroRepository : ILivroRepository
         try
         {
             var livro = await _context.Livro
+                .AsNoTracking()
                 .Include(x => x.Autor)
                 .Include(x => x.Categoria)
                 .FirstOrDefaultAsync(x => x.Id == Id);

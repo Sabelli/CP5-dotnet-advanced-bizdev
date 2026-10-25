@@ -29,7 +29,7 @@ public class UserRepository : IUserRepository
     {
         try
         {
-            var user = await _context.Usuario.FirstOrDefaultAsync(x => x.Email == email);
+            var user = await _context.Usuario.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
             return user ?? throw new NoContentException("Usuário não encontrado");
         }
         catch (NoContentException ex) { throw new NoContentException(ex.Message); }

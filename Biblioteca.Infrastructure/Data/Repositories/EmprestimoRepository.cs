@@ -23,6 +23,7 @@ public class EmprestimoRepository : IEmprestimoRepository
 
             var total = await _context.Emprestimo.CountAsync();
             var resultado = await _context.Emprestimo
+                .AsNoTracking()
                 .Include(x => x.Livro)
                 .Include(x => x.Usuario)
                 .OrderBy(x => x.Id)
@@ -44,6 +45,7 @@ public class EmprestimoRepository : IEmprestimoRepository
         try
         {
             var emprestimo = await _context.Emprestimo
+                .AsNoTracking()
                 .Include(x => x.Livro)
                 .Include(x => x.Usuario)
                 .FirstOrDefaultAsync(x => x.Id == Id);
