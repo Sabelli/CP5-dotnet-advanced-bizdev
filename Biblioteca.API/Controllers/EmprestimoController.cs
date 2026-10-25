@@ -1,10 +1,12 @@
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace Biblioteca.API.Controllers;
 
+[Authorize]
 [Route("api/emprestimo")]
 [ApiController]
 public class EmprestimoController : ControllerBase

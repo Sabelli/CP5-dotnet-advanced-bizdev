@@ -1,10 +1,12 @@
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace Biblioteca.API.Controllers;
 
+[Authorize]
 [Route("api/categoria")]
 [ApiController]
 public class CategoriaController : ControllerBase
@@ -37,6 +39,7 @@ public class CategoriaController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    [Authorize(Roles = "admin")]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] PostCategoriaDto dto)
     {
@@ -47,6 +50,7 @@ public class CategoriaController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    [Authorize(Roles = "admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, [FromBody] PostCategoriaDto dto)
     {
@@ -57,6 +61,7 @@ public class CategoriaController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {

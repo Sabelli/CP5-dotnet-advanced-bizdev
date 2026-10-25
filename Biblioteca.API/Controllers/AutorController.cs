@@ -1,10 +1,12 @@
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace Biblioteca.API.Controllers;
 
+[Authorize]
 [Route("api/autor")]
 [ApiController]
 public class AutorController : ControllerBase
@@ -37,6 +39,7 @@ public class AutorController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    [Authorize(Roles = "admin")]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] PostAutorDto dto)
     {
@@ -47,6 +50,7 @@ public class AutorController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    [Authorize(Roles = "admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, [FromBody] PostAutorDto dto)
     {
@@ -57,6 +61,7 @@ public class AutorController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
