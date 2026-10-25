@@ -14,16 +14,19 @@ public class LivroUseCase : ILivroUseCase
     private readonly ILivroRepository _repository;
     private readonly IAutorRepository _autorRepository;
     private readonly ICategoriaRepository _categoriaRepository;
+    private readonly ILivroExternoService _livroExternoService;
     private readonly ILogger<LivroUseCase> _logger;
 
     public LivroUseCase(ILivroRepository repository,
         IAutorRepository autorRepository,
         ICategoriaRepository categoriaRepository,
+        ILivroExternoService livroExternoService,
         ILogger<LivroUseCase> logger)
     {
         _repository = repository;
         _autorRepository = autorRepository;
         _categoriaRepository = categoriaRepository;
+        _livroExternoService = livroExternoService;
         _logger = logger;
     }
 
@@ -139,6 +142,29 @@ public class LivroUseCase : ILivroUseCase
         {
             _logger.LogError("[ERROR] - {0}", ex.Message);
             return OperationResult<GetLivroDto>.Failure("Ocorreu um erro ao deletar o livro", (int)HttpStatusCode.BadRequest);
+        }
+    }
+
+    public async Task<OperationResult<EdicaoLivroModel>> ObterPorIsbnAsync(string isbn)
+    {
+        if (string.IsNullOrWhiteSpace(isbn))
+            return OperationResult<EdicaoLivroModel>.Failure("O ISBN é obrigatório", (int)HttpStatusCode.BadRequest);
+
+        try
+        {
+            _logger.LogInformation("Iniciando o ObterPorIsbnAsync na camada de application");
+            var result = await _livroExternoService.ObterPorIsbnAsync(isbn);
+            return OperationResult<EdicaoLivroModel>.Success(result, (int)HttpStatusCode.OK);
+        }
+        catch (NoContentException ex)
+        {
+            _logger.LogWarning("Não retornou livro externo para ISBN: {0}", isbn);
+            return OperationResult<EdicaoLivroModel>.Failure(ex.Message, (int)HttpStatusCode.NotFound);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("[ERROR] - {0}", ex.Message);
+            return OperationResult<EdicaoLivroModel>.Failure("Ocorreu um erro ao consultar o ISBN", (int)HttpStatusCode.BadRequest);
         }
     }
 }

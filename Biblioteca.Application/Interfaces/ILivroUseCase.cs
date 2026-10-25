@@ -10,4 +10,5 @@ public interface ILivroUseCase
     Task<OperationResult<GetLivroDto>> AdicionarAsync(PostLivroDto dto);
     Task<OperationResult<GetLivroDto>> EditarAsync(int Id, PostLivroDto dto);
     Task<OperationResult<GetLivroDto>> DeletarAsync(int Id);
+    Task<OperationResult<EdicaoLivroModel>> ObterPorIsbnAsync(string isbn);
 }
