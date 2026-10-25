@@ -135,9 +135,3 @@ Resposta de exemplo (`GET api/livro?Deslocamento=0&RegistroRetornado=1`):
             { "href": "/api/livro", "rel": "create_livro", "method": "POST" }]
 }
 ```
-
-## Limitações conhecidas
-
-- Qualquer pessoa pode se cadastrar com `role: "admin"`; isso foi mantido para facilitar a demonstração de 200/403. Em produção, a role seria atribuída só por um administrador.
-- Não há circuit breaker no serviço externo (exigiria pacote fora da lista usada em aula); a resiliência é timeout + retry.
-- O Oracle EF Core 8 gera SQL inválido para `AnyAsync` neste cenário, por isso `LivroEmprestadoAsync` usa `CountAsync(...) > 0`.
