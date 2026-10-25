@@ -1,8 +1,10 @@
 using Biblioteca.API.Config;
 using Biblioteca.IoC;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -42,6 +44,16 @@ builder.Services.AddSwaggerGen(c =>
         { securitySchema, new[] { "Bearer" } }
     });
 });
+
+builder.Services.AddHealthChecks()
+    // Liveness
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+    // Readiness
+    .AddOracle(
+        connectionString: builder.Configuration.GetConnectionString("Oracle") ?? "",
+        name: "oracle",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: ["db"]);
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Secretkey"]!);
 
@@ -99,6 +111,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live")
+});
+
+app.MapHealthChecks("/health/db", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("db")
+});
 
 app.UseHttpsRedirection();
 
