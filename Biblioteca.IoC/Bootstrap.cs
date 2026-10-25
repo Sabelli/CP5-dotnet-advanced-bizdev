@@ -12,7 +12,9 @@ public static class Bootstrap
     public static void AddIoC(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationContext>(options =>
-            options.UseOracle(configuration.GetConnectionString("Oracle")));
+            options.UseOracle(
+                configuration.GetConnectionString("Oracle"),
+                o => o.MigrationsHistoryTable("__BibliotecaMigrationsHistory")));
 
         services.AddTransient<IAutorRepository, AutorRepository>();
         services.AddTransient<ICategoriaRepository, CategoriaRepository>();
