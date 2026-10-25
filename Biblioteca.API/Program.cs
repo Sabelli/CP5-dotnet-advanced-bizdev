@@ -1,3 +1,4 @@
+using Biblioteca.API.Config;
 using Biblioteca.IoC;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
@@ -10,6 +11,8 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddLogApi();
 
 builder.Services.AddControllers();
 Bootstrap.AddIoC(builder.Services, builder.Configuration);
