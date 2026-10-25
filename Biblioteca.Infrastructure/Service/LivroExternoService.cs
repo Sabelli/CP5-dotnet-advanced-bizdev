@@ -10,13 +10,15 @@ namespace Biblioteca.Infrastructure.Service;
 
 public class LivroExternoService : ILivroExternoService
 {
+    private const int MaxTentativas = 3;
+
     private readonly ILogger<LivroExternoService> _logger;
     private readonly RestClient _restClient;
 
     public LivroExternoService(ILogger<LivroExternoService> logger)
     {
         _logger = logger;
-        _restClient = new RestClient("https://openlibrary.org");
+        _restClient = new RestClient(new RestClientOptions("https://openlibrary.org") { Timeout = TimeSpan.FromSeconds(5) });
     }
 
     public async Task<EdicaoLivroModel> ObterPorIsbnAsync(string isbn)
@@ -26,7 +28,7 @@ public class LivroExternoService : ILivroExternoService
             .AddQueryParameter("format", "json")
             .AddQueryParameter("jscmd", "data");
 
-        var response = await _restClient.ExecuteAsync(request);
+        var response = await ExecutarComRetryAsync(request);
 
         if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
         {
@@ -55,5 +57,27 @@ public class LivroExternoService : ILivroExternoService
             Autor = autor,
             AnoPublicacao = ano
         };
+    }
+
+    // Retry só para falha transitória (timeout/erro de rede/5xx); 4xx não é repetido.
+    private async Task<RestResponse> ExecutarComRetryAsync(RestRequest request)
+    {
+        RestResponse response = null!;
+
+        for (var tentativa = 1; tentativa <= MaxTentativas; tentativa++)
+        {
+            response = await _restClient.ExecuteAsync(request);
+
+            var transitoria = (int)response.StatusCode >= 500
+                || response.ResponseStatus is ResponseStatus.TimedOut or ResponseStatus.Error;
+
+            if (!transitoria || tentativa == MaxTentativas)
+                break;
+
+            _logger.LogWarning("OpenLibrary tentativa {0}/{1} falhou ({2}), tentando novamente", tentativa, MaxTentativas, response.StatusCode);
+            await Task.Delay(TimeSpan.FromMilliseconds(200 * tentativa));
+        }
+
+        return response;
     }
 }
