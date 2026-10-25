@@ -125,10 +125,16 @@ Migration em `Biblioteca.Infrastructure/Data/Migrations/`:
 
 - `initdb` — schema inicial (Autor, Categoria, Livro, Usuario, Emprestimo) e índices
 
-Aplicar no banco:
+Aplicar no banco (Package Manager Console, projeto padrão `Biblioteca.Infrastructure`, projeto de inicialização `Biblioteca.API`):
+
+```powershell
+Update-Database
+```
+
+Ou pela CLI, com o `dotnet-ef` instalado globalmente:
 
 ```bash
-dotnet tool restore
+dotnet tool install --global dotnet-ef --version 8.0.26
 dotnet ef database update --project Biblioteca.Infrastructure --startup-project Biblioteca.API
 ```
 
