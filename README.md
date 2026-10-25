@@ -187,22 +187,6 @@ dotnet test --filter "Integracao=ServicoExterno"
 
 ---
 
-## Requisitos do CP5
-
-| Requisito | Onde está |
-|-----------|-----------|
-| Arquitetura em camadas | Projetos acima; o Domain não referencia nada e não tem atributos do EF (mapeamento em `ApplicationContext`) |
-| Operation Result | `Biblioteca.Domain/Entities/OperationResult.cs`; todo UseCase devolve `OperationResult<T>` e o Controller só repassa `StatusCode` + `Value`/`Error` |
-| Erros customizados | `Biblioteca.Domain/Errors/NoContentException`, **lançada** pelos Repositories quando não há registro e **convertida** pelos UseCases: 404 em consulta única, 204 em lista vazia, 400 em erro inesperado. Regras de negócio retornam 409 (empréstimo) |
-| Serviço externo | `Biblioteca.Infrastructure/Service/LivroExternoService.cs` (RestSharp → Open Library). Timeout de 5 s e retry manual (3 tentativas, backoff linear) apenas em 5xx/timeout/erro de rede; falha final vira `NoContentException` → 404 |
-| PageResult | `PageResponseDto<T>` com `Items`, `Deslocamento`, `RegistroRetornado`, `TotalRegistros` e `Links` |
-| HATEOAS | `LinkDto` (`href`, `rel`, `method`) em cada recurso e em cada página (`Application/Mappers`) |
-| Autenticação/Autorização | JWT Bearer (HS256, 8 h) com perfis `admin` e `leitor` |
-| Otimização | `AsNoTracking` em toda leitura, `Count` + `OrderBy` + `Skip/Take` (paginação no banco), `Include` só em Livro/Empréstimo, índices, compressão, rate limiter |
-| Testes | `Biblioteca.Tests` (73 testes) |
-
----
-
 ## Comportamentos Transversais
 
 ### Paginação
