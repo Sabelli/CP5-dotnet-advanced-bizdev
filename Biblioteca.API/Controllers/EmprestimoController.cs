@@ -1,6 +1,7 @@
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Biblioteca.API.Controllers;
 
@@ -16,6 +17,7 @@ public class EmprestimoController : ControllerBase
     }
 
     [HttpGet]
+    [EnableRateLimiting("politica_listagem")]
     public async Task<IActionResult> Get(int Deslocamento, int RegistroRetornado)
     {
         var resultado = await _emprestimoUseCase.ObterTodosAsync(Deslocamento, RegistroRetornado);

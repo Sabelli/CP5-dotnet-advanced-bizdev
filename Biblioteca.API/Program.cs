@@ -1,4 +1,5 @@
 using Biblioteca.IoC;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.Threading.RateLimiting;
 
@@ -31,6 +32,18 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options =>
     options.Level = System.IO.Compression.CompressionLevel.Fastest;
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter(policyName: "politica_listagem", opt =>
+    {
+        opt.PermitLimit = 30;
+        opt.Window = TimeSpan.FromSeconds(10);
+        opt.QueueLimit = 0;
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -45,6 +58,8 @@ app.UseHttpsRedirection();
 app.UseResponseCompression();
 
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 app.MapControllers();
 
