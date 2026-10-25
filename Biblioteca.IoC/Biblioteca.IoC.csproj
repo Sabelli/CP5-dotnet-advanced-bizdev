@@ -13,6 +13,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Oracle.EntityFrameworkCore" Version="8.23.26200" />
+    <PackageReference Include="RestSharp" Version="114.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
