@@ -24,6 +24,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        // Testes compartilham o mesmo IP: limites altos para não gerar 429.
+        builder.UseSetting("RateLimit:Escrita", "100000");
+        builder.UseSetting("RateLimit:Auth", "100000");
 
         builder.ConfigureServices(services =>
         {

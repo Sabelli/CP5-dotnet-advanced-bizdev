@@ -61,6 +61,7 @@ public class LivroController : ControllerBase
     /// Consulta livro por ISBN
     /// </summary>
     /// <returns>Dados do livro</returns>
+    [EnableRateLimiting("politica_escrita")]
     [HttpGet("isbn/{isbn}")]
     [SwaggerOperation(
         Summary = "Consulta livro por ISBN",
@@ -94,6 +95,7 @@ public class LivroController : ControllerBase
     /// Obtém livro por id
     /// </summary>
     /// <returns>Livro encontrado</returns>
+    [EnableRateLimiting("politica_listagem")]
     [HttpGet("{id}")]
     [SwaggerOperation(
         Summary = "Obtém livro por id",
@@ -125,6 +127,7 @@ public class LivroController : ControllerBase
     /// </summary>
     /// <returns>Livro criado</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Cadastra livro",
@@ -164,6 +167,7 @@ public class LivroController : ControllerBase
     /// </summary>
     /// <returns>Livro atualizado</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpPut("{id}")]
     [SwaggerOperation(
         Summary = "Edita livro",
@@ -202,6 +206,7 @@ public class LivroController : ControllerBase
     /// </summary>
     /// <returns>Livro removido</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpDelete("{id}")]
     [SwaggerOperation(
         Summary = "Remove livro",

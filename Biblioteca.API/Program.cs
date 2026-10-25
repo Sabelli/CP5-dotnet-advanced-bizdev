@@ -103,6 +103,16 @@ builder.Services.AddRateLimiter(options =>
         opt.QueueLimit = 0;
     });
 
+    // Escrita (POST/PUT/DELETE) e consulta ao serviço externo: por IP.
+    options.AddPolicy("politica_escrita", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "anonimo",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimit:Escrita", 20), Window = TimeSpan.FromSeconds(10), QueueLimit = 0 }));
+
+    // Login e cadastro de usuário: por IP, contra força bruta.
+    options.AddPolicy("politica_auth", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "anonimo",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimit:Auth", 10), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 

@@ -3,6 +3,7 @@ using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -24,6 +25,7 @@ public class AuthController : ControllerBase
     /// Autentica usuário
     /// </summary>
     /// <returns>Autenticado</returns>
+    [EnableRateLimiting("politica_auth")]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Autentica usuário",

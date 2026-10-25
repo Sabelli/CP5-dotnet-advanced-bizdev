@@ -60,6 +60,7 @@ public class CategoriaController : ControllerBase
     /// Obtém categoria por id
     /// </summary>
     /// <returns>Categoria encontrada</returns>
+    [EnableRateLimiting("politica_listagem")]
     [HttpGet("{id}")]
     [SwaggerOperation(
         Summary = "Obtém categoria por id",
@@ -91,6 +92,7 @@ public class CategoriaController : ControllerBase
     /// </summary>
     /// <returns>Categoria criada</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Cadastra categoria",
@@ -121,6 +123,7 @@ public class CategoriaController : ControllerBase
     /// </summary>
     /// <returns>Categoria atualizada</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpPut("{id}")]
     [SwaggerOperation(
         Summary = "Edita categoria",
@@ -153,6 +156,7 @@ public class CategoriaController : ControllerBase
     /// </summary>
     /// <returns>Categoria removida</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpDelete("{id}")]
     [SwaggerOperation(
         Summary = "Remove categoria",

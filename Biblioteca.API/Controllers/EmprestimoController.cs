@@ -60,6 +60,7 @@ public class EmprestimoController : ControllerBase
     /// Obtém empréstimo por id
     /// </summary>
     /// <returns>Empréstimo encontrado</returns>
+    [EnableRateLimiting("politica_listagem")]
     [HttpGet("{id}")]
     [SwaggerOperation(
         Summary = "Obtém empréstimo por id",
@@ -90,6 +91,7 @@ public class EmprestimoController : ControllerBase
     /// Registra empréstimo
     /// </summary>
     /// <returns>Empréstimo criado</returns>
+    [EnableRateLimiting("politica_escrita")]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Registra empréstimo",
@@ -124,6 +126,7 @@ public class EmprestimoController : ControllerBase
     /// Devolve empréstimo
     /// </summary>
     /// <returns>Devolução registrada</returns>
+    [EnableRateLimiting("politica_escrita")]
     [HttpPut("{id}/devolver")]
     [SwaggerOperation(
         Summary = "Devolve empréstimo",

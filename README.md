@@ -233,7 +233,15 @@ A resposta (`200 OK`) vem em um envelope com metadados de paginação e links HA
 
 ### Rate Limiting
 
-Fixed window (`politica_listagem`) aplicada em todo GET de listagem (Autor, Categoria, Livro, Empréstimo): **30 requisições a cada 10 segundos**, sem fila. Ao exceder: **429 Too Many Requests**.
+Fixed window, sem fila. Ao exceder: **429 Too Many Requests**.
+
+| Política | Limite | Partição | Onde |
+|----------|--------|----------|------|
+| `politica_listagem` | 30 / 10 s | global | GET de listagem e GET por id (Autor, Categoria, Livro, Empréstimo) |
+| `politica_escrita` | 20 / 10 s (`RateLimit:Escrita`) | por IP | POST, PUT e DELETE de todos os recursos e `GET api/livro/isbn/{isbn}` (serviço externo) |
+| `politica_auth` | 10 / min (`RateLimit:Auth`) | por IP | `POST api/auth` e `POST api/user` |
+
+`/api/health` e `/health/*` ficam sem limite (probes).
 
 ### Compressão de Resposta
 

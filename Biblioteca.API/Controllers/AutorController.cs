@@ -60,6 +60,7 @@ public class AutorController : ControllerBase
     /// Obtém autor por id
     /// </summary>
     /// <returns>Autor encontrado</returns>
+    [EnableRateLimiting("politica_listagem")]
     [HttpGet("{id}")]
     [SwaggerOperation(
         Summary = "Obtém autor por id",
@@ -91,6 +92,7 @@ public class AutorController : ControllerBase
     /// </summary>
     /// <returns>Autor criado</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Cadastra autor",
@@ -121,6 +123,7 @@ public class AutorController : ControllerBase
     /// </summary>
     /// <returns>Autor atualizado</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpPut("{id}")]
     [SwaggerOperation(
         Summary = "Edita autor",
@@ -153,6 +156,7 @@ public class AutorController : ControllerBase
     /// </summary>
     /// <returns>Autor removido</returns>
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("politica_escrita")]
     [HttpDelete("{id}")]
     [SwaggerOperation(
         Summary = "Remove autor",

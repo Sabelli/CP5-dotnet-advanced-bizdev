@@ -3,6 +3,7 @@ using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -24,6 +25,7 @@ public class UserController : ControllerBase
     /// Cadastra usuário
     /// </summary>
     /// <returns>Usuário criado</returns>
+    [EnableRateLimiting("politica_auth")]
     [HttpPost]
     [SwaggerOperation(
         Summary = "Cadastra usuário",
