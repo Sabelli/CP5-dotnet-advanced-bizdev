@@ -254,7 +254,7 @@ A resposta deve trazer `Content-Encoding: gzip` (ou `br`, se negociado Brotli).
 | `leitor` consultando | 200 / 204 |
 | `admin` | acesso total |
 | Empréstimos | qualquer usuário autenticado |
-| `api/user`, `api/auth`, `/health/*` | anônimos |
+| `api/user`, `api/auth`, `api/health`, `/health/*` | anônimos |
 
 Senhas armazenadas com PBKDF2-SHA256 (100 mil iterações, salt aleatório). Login com e-mail ou senha incorretos retorna 401 ("E-mail ou senha incorretos.").
 
@@ -272,12 +272,15 @@ Console + arquivo (`logs/api-<data>.log`, rotação diária, retenção de 7 arq
 |----------|------|-----|-----|
 | `GET /health/live` | liveness | processo saudável | processo travado |
 | `GET /health/db` | readiness | banco Oracle acessível | banco indisponível |
+| `GET /api/health` | relatório completo (Swagger) | tudo saudável | alguma verificação falhou |
+
+`GET /api/health` (`HealthController`) devolve o status geral e, por verificação (`self`, `oracle`), status, duração e erro.
 
 ---
 
 ## Rotas
 
-Todas exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth` e `/health/*`.
+Todas exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth`, `api/health` e `/health/*`.
 
 ### Usuários — `/api/user`
 
@@ -387,6 +390,7 @@ Todas exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth` e `/he
 |--------|------|-----------|---------|
 | GET | `/health/live` | Liveness | 200 / 503 |
 | GET | `/health/db` | Readiness — banco Oracle | 200 / 503 |
+| GET | `/api/health` | Relatório de todas as verificações | 200 / 503 |
 
 ---
 
