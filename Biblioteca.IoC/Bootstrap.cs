@@ -1,3 +1,5 @@
+using Biblioteca.Application.Interfaces;
+using Biblioteca.Application.UseCases;
 using Biblioteca.Domain.Interfaces;
 using Biblioteca.Infrastructure.Data;
 using Biblioteca.Infrastructure.Data.Repositories;
@@ -21,5 +23,7 @@ public static class Bootstrap
         services.AddTransient<ILivroRepository, LivroRepository>();
         services.AddTransient<IEmprestimoRepository, EmprestimoRepository>();
         services.AddTransient<IUserRepository, UserRepository>();
+
+        services.AddTransient<IAutorUseCase, AutorUseCase>();
     }
 }
