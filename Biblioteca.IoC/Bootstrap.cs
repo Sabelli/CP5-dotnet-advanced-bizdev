@@ -32,5 +32,6 @@ public static class Bootstrap
         services.AddTransient<ICategoriaUseCase, CategoriaUseCase>();
         services.AddTransient<ILivroUseCase, LivroUseCase>();
         services.AddTransient<IEmprestimoUseCase, EmprestimoUseCase>();
+        services.AddTransient<IUserUseCase, UserUseCase>();
     }
 }
