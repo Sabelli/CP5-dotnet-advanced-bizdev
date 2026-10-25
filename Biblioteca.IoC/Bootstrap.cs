@@ -3,6 +3,7 @@ using Biblioteca.Application.UseCases;
 using Biblioteca.Domain.Interfaces;
 using Biblioteca.Infrastructure.Data;
 using Biblioteca.Infrastructure.Data.Repositories;
+using Biblioteca.Infrastructure.Service;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,7 @@ public static class Bootstrap
         services.AddTransient<ILivroRepository, LivroRepository>();
         services.AddTransient<IEmprestimoRepository, EmprestimoRepository>();
         services.AddTransient<IUserRepository, UserRepository>();
+        services.AddTransient<ILivroExternoService, LivroExternoService>();
 
         services.AddTransient<IAutorUseCase, AutorUseCase>();
         services.AddTransient<ICategoriaUseCase, CategoriaUseCase>();
