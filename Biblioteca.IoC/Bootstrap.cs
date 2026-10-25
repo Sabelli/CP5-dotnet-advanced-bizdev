@@ -25,5 +25,6 @@ public static class Bootstrap
         services.AddTransient<IUserRepository, UserRepository>();
 
         services.AddTransient<IAutorUseCase, AutorUseCase>();
+        services.AddTransient<ICategoriaUseCase, CategoriaUseCase>();
     }
 }
