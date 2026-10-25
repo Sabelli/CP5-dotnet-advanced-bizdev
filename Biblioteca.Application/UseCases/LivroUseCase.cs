@@ -42,7 +42,8 @@ public class LivroUseCase : ILivroUseCase
                 Items = result.data.Select(x => x.ToLivroDto()),
                 Deslocamento = Deslocamento,
                 RegistroRetornado = RegistroRetornado,
-                TotalRegistros = result.rowsCount
+                TotalRegistros = result.rowsCount,
+                Links = PageLinks.Build("/api/livro", "livro", Deslocamento, RegistroRetornado, result.rowsCount)
             };
 
             return OperationResult<PageResponseDto<GetLivroDto>>.Success(page, (int)HttpStatusCode.OK);

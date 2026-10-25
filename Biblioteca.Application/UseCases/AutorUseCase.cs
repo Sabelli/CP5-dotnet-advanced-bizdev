@@ -35,7 +35,8 @@ public class AutorUseCase : IAutorUseCase
                 Items = result.data.Select(x => x.ToAutorDto()),
                 Deslocamento = Deslocamento,
                 RegistroRetornado = RegistroRetornado,
-                TotalRegistros = result.rowsCount
+                TotalRegistros = result.rowsCount,
+                Links = PageLinks.Build("/api/autor", "autor", Deslocamento, RegistroRetornado, result.rowsCount)
             };
 
             return OperationResult<PageResponseDto<GetAutorDto>>.Success(page, (int)HttpStatusCode.OK);

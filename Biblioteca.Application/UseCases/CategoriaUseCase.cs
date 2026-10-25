@@ -35,7 +35,8 @@ public class CategoriaUseCase : ICategoriaUseCase
                 Items = result.data.Select(x => x.ToCategoriaDto()),
                 Deslocamento = Deslocamento,
                 RegistroRetornado = RegistroRetornado,
-                TotalRegistros = result.rowsCount
+                TotalRegistros = result.rowsCount,
+                Links = PageLinks.Build("/api/categoria", "categoria", Deslocamento, RegistroRetornado, result.rowsCount)
             };
 
             return OperationResult<PageResponseDto<GetCategoriaDto>>.Success(page, (int)HttpStatusCode.OK);

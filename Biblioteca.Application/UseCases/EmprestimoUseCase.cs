@@ -39,7 +39,8 @@ public class EmprestimoUseCase : IEmprestimoUseCase
                 Items = result.data.Select(x => x.ToEmprestimoDto()),
                 Deslocamento = Deslocamento,
                 RegistroRetornado = RegistroRetornado,
-                TotalRegistros = result.rowsCount
+                TotalRegistros = result.rowsCount,
+                Links = PageLinks.Build("/api/emprestimo", "emprestimo", Deslocamento, RegistroRetornado, result.rowsCount)
             };
 
             return OperationResult<PageResponseDto<GetEmprestimoDto>>.Success(page, (int)HttpStatusCode.OK);
