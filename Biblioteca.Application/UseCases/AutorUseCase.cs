@@ -24,6 +24,9 @@ public class AutorUseCase : IAutorUseCase
     {
         try
         {
+            if (Deslocamento < 0) Deslocamento = 0;
+            if (RegistroRetornado <= 0) RegistroRetornado = 30;
+
             _logger.LogInformation("Iniciando o ObterTodosAsync de autores na camada de application");
             var result = await _repository.ObterTodosAsync(Deslocamento, RegistroRetornado);
 

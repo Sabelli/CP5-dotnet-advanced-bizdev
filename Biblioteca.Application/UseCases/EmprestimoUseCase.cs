@@ -28,6 +28,9 @@ public class EmprestimoUseCase : IEmprestimoUseCase
     {
         try
         {
+            if (Deslocamento < 0) Deslocamento = 0;
+            if (RegistroRetornado <= 0) RegistroRetornado = 30;
+
             _logger.LogInformation("Iniciando o ObterTodosAsync de empréstimos na camada de application");
             var result = await _repository.ObterTodosAsync(Deslocamento, RegistroRetornado);
 
