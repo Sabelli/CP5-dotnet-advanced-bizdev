@@ -1,12 +1,12 @@
-# Biblioteca.API — .NET
+# Biblioteca.API - .NET
 
 API RESTful desenvolvida em **ASP.NET Core (.NET 8)** para o gerenciamento de uma biblioteca, como Checkpoint 5 (CP5) da disciplina **Advanced Business Development with .NET**.
 
 A API cuida do cadastro e manutenção de **autores, categorias, livros, usuários e empréstimos**, com consulta de dados de livro por **ISBN** em um serviço externo (Open Library).
 
-O projeto é organizado em **Clean Architecture** (Domain / Application / Infrastructure / API, mais IoC e Tests), com **Operation Result**, **erros customizados**, **paginação**, **HATEOAS**, **autenticação JWT com perfis**, **índices de banco**, **rate limiting**, **compressão de resposta** (Brotli / Gzip), **observabilidade** (Serilog e health checks) e uma suíte de **testes** (xUnit) de unidade e de integração contra o Oracle real.
+O projeto é organizado em **Clean Architecture** (Domain / Application / Infrastructure / API, mais IoC e Tests), com **Operation Result**, **erros customizados**, **paginação**, **HATEOAS**, **autenticação JWT com perfis**, **índices de banco**, **rate limiting**, **compressão de resposta** (Brotli / Gzip), **observabilidade** (Serilog e health checks) e uma suíte de **testes** (xUnit) de unidade e de integração.
 
-**Vídeo de demonstração (máx. 5 min):** _<colar aqui o link do vídeo>_
+[![YouTube](https://img.shields.io/badge/YouTube-Assistir%20Demonstração-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/TkhOyw_BKEc)
 
 ---
 
