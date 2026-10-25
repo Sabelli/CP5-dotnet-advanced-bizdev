@@ -27,6 +27,16 @@ public class LivroController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    [HttpGet("isbn/{isbn}")]
+    public async Task<IActionResult> GetPorIsbn(string isbn)
+    {
+        var resultado = await _livroUseCase.ObterPorIsbnAsync(isbn);
+
+        if (!resultado.IsSuccess) return StatusCode(resultado.StatusCode, resultado.Error);
+
+        return StatusCode(resultado.StatusCode, resultado.Value);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)
     {
