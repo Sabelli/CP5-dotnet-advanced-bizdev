@@ -1,6 +1,6 @@
 CP5 - Advanced Business Development with .NET - Biblioteca.API
 
-Repositório: <colar o link do repositório público>
+Repositório: https://github.com/Sabelli/CP5-dotnet-advanced-bizdev
 Vídeo (máx. 5 min): <colar o link do vídeo>
 
 Integrantes:
