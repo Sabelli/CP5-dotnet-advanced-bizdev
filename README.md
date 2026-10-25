@@ -1,137 +1,413 @@
-# Biblioteca.API
+# Biblioteca.API — .NET
 
-API REST de gerenciamento de biblioteca (autores, categorias, livros e empréstimos), feita em **.NET 8** com Controllers para o CP5 de *Advanced Business Development with .NET* (FIAP, 2026).
+API RESTful desenvolvida em **ASP.NET Core (.NET 8)** para o gerenciamento de uma biblioteca, como Checkpoint 5 (CP5) da disciplina **Advanced Business Development with .NET**.
+
+A API cuida do cadastro e manutenção de **autores, categorias, livros, usuários e empréstimos**, com consulta de dados de livro por **ISBN** em um serviço externo (Open Library).
+
+O projeto é organizado em **Clean Architecture** (Domain / Application / Infrastructure / API, mais IoC e Tests), com **Operation Result**, **erros customizados**, **paginação**, **HATEOAS**, **autenticação JWT com perfis**, **índices de banco**, **rate limiting**, **compressão de resposta** (Brotli / Gzip), **observabilidade** (Serilog e health checks) e uma suíte de **testes** (xUnit) de unidade e de integração contra o Oracle real.
 
 **Vídeo de demonstração (máx. 5 min):** _<colar aqui o link do vídeo>_
 
+---
+
 ## Integrantes
 
-| Nome completo | RM |
-|---|---|
-| _<preencher>_ | _<preencher>_ |
+| Nome | RM |
+|------|----|
+| Victor Sabelli | RM566224 |
+| Gustavo Crevelari | RM561408 |
+| Lucca Gomes | RM561996 |
+| Rafaela Ferreira | RM561671 |
 
-## O que a API faz
+---
 
-- CRUD de **Autor**, **Categoria** e **Livro** (Livro pertence a um Autor e a uma Categoria).
-- **Empréstimo** de livros: emprestar, devolver, consultar. Um livro já emprestado não pode ser emprestado de novo (409) e um empréstimo já devolvido não pode ser devolvido outra vez (409).
-- Consulta de dados de um livro por **ISBN** no serviço externo [Open Library](https://openlibrary.org/dev/docs/api/books).
-- Cadastro de usuário e login com **JWT**. `leitor` consulta; `admin` também cria, altera e remove.
+## Repositório
 
-## Arquitetura (Clean Architecture)
+[![GitHub](https://img.shields.io/badge/GitHub-Acessar%20Repositório-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Sabelli/CP5-dotnet-advanced-bizdev.git)
+
+---
+
+## Estrutura do Projeto
 
 ```
-Biblioteca.API            -> Application, IoC        (Controllers, Program, Swagger, JWT, rate limiter, compressão, Serilog, health)
-Biblioteca.Application    -> Domain                  (UseCases, DTOs, Mappers, HATEOAS, TokenService, hash de senha)
-Biblioteca.Domain         (sem dependências)         (Entidades, OperationResult, NoContentException, interfaces)
-Biblioteca.Infrastructure -> Domain                  (EF Core + Oracle, Repositories, LivroExternoService com RestSharp)
-Biblioteca.IoC            -> Application, Domain, Infrastructure  (Bootstrap.AddIoC)
-Biblioteca.Tests          -> todos                   (xUnit + Moq; integração com Oracle real)
+CP5-dotnet-advanced-bizdev/
+├── Biblioteca.slnx                       # solução
+├── Biblioteca.API/                       # Controllers, Program, Swagger, JWT, rate limiter, compressão, Serilog, health
+│   ├── Controllers/                      # Autor, Categoria, Livro, Emprestimo, User, Auth
+│   └── Config/                           # configuração do Serilog
+├── Biblioteca.Application/               # regras de negócio
+│   ├── Dtos/                             # Post*/Get*Dto, PageResponseDto<T>, LinkDto
+│   ├── Interfaces/                       # contratos dos use cases
+│   ├── Mappers/                          # Entity <-> DTO e links HATEOAS (PageLinks)
+│   ├── Services/                         # TokenService (JWT), SenhaHasher (PBKDF2)
+│   └── UseCases/                         # AutorUseCase, CategoriaUseCase, LivroUseCase, EmprestimoUseCase, UserUseCase
+├── Biblioteca.Domain/                    # sem dependências de framework
+│   ├── Entities/                         # *Entity, OperationResult<T>, EdicaoLivroModel
+│   ├── Errors/                           # NoContentException
+│   └── Interfaces/                       # repositórios, ILivroExternoService, ITokenService
+├── Biblioteca.Infrastructure/            # EF Core + Oracle
+│   ├── Data/                             # ApplicationContext, Migrations, Repositories
+│   └── Service/                          # LivroExternoService (RestSharp -> Open Library)
+├── Biblioteca.IoC/                       # Bootstrap.AddIoC (injeção de dependência)
+└── Biblioteca.Tests/                     # xUnit
+    ├── Unit/                             # use cases, OperationResult, mappers, token, hash (Moq)
+    └── Integration/                      # WebApplicationFactory + Oracle real
 ```
 
-| Requisito do CP5 | Onde está |
-|---|---|
-| Arquitetura em camadas | Projetos acima; o Domain não referencia nada e não tem atributos do EF (mapeamento em `ApplicationContext`) |
-| Operation Result | `Domain/Entities/OperationResult.cs`; todo UseCase devolve `OperationResult<T>` e o Controller só repassa `StatusCode` + `Value`/`Error` |
-| Erros customizados | `Domain/Errors/NoContentException`, **lançada** pelos Repositories quando não há registro e **convertida** pelos UseCases: 404 em consulta única, 204 em lista vazia, 400 em erro inesperado. Regras de negócio retornam 409 (empréstimo) |
-| Serviço externo | `Infrastructure/Service/LivroExternoService.cs` (RestSharp → Open Library). Timeout de 5 s e retry manual (3 tentativas, backoff linear) apenas em 5xx/timeout/erro de rede; falha final vira `NoContentException` → 404 |
-| PageResult | `PageResponseDto<T>` com `Items`, `Deslocamento`, `RegistroRetornado`, `TotalRegistros` e `Links`. `Deslocamento < 0` vira 0 e `RegistroRetornado <= 0` vira 30 |
-| HATEOAS | `LinkDto` (`href`, `rel`, `method`). Cada recurso traz `self`/`update`/`delete` (empréstimo traz `devolver_emprestimo` só enquanto está aberto) e cada página traz `self`, `create_*`, `next` e `prev` (`Application/Mappers`) |
-| Autenticação/Autorização | JWT Bearer (HS256, 8 h, claims de nome e role). `[Authorize]` nas leituras, `[Authorize(Roles = "admin")]` em POST/PUT/DELETE de Autor, Categoria e Livro. `api/user` e `api/auth` são anônimos. Senhas com PBKDF2-SHA256 (100 mil iterações, salt aleatório) |
-| Otimização | `AsNoTracking` em toda leitura, `Count` + `OrderBy` + `Skip/Take` (paginação no banco), `Include` só em Livro/Empréstimo, índices (abaixo), compressão Brotli/Gzip, rate limiter |
-| Testes | `Biblioteca.Tests` (73 testes): unidade com Moq e integração via `WebApplicationFactory` contra o Oracle real |
-| Extras | Serilog (console + arquivo), health checks `/health/live` e `/health/db`, Swagger com botão Authorize |
+Dependências entre projetos: `API → Application, IoC` · `Application → Domain` · `Infrastructure → Domain` · `IoC → Application, Domain, Infrastructure` · `Tests → todos`.
 
-### Banco de dados
+---
 
-Oracle FIAP. O schema é **compartilhado**, então todas as tabelas têm prefixo `tb_bib_` e o histórico de migrations usa a tabela própria `__BibliotecaMigrationsHistory`. A migration `initdb` cria também os índices:
+## Modelagem
+
+- `Livro` **N:1** `Autor` — um autor tem vários livros.
+- `Livro` **N:1** `Categoria` — uma categoria tem vários livros.
+- `Emprestimo` **N:1** `Livro` e **N:1** `Usuario` — um livro pode ter vários empréstimos ao longo do tempo, mas só um aberto por vez.
+
+Banco Oracle FIAP, schema **compartilhado**: todas as tabelas têm prefixo `tb_bib_` e o histórico de migrations usa a tabela própria `__BibliotecaMigrationsHistory`. A migration `initdb` cria também os índices:
 
 | Índice | Uso |
-|---|---|
+|--------|-----|
 | `IDX_bib_livro_isbn` (único) | busca e unicidade por ISBN |
 | `IDX_bib_livro_titulo_autor` | busca por título/autor |
 | `IDX_bib_usuario_email` (único) | login e checagem de e-mail duplicado |
 | `IDX_bib_emprestimo_livro_devol` | "este livro está emprestado?" (`LivroId` + `DataDevolucao`) |
 
-## Pacotes
+---
 
-Mesmas versões do projeto do professor.
+## Tecnologias
 
-- **API:** JwtBearer 8.0.31, Swashbuckle.AspNetCore / .Annotations 6.6.2, .Filters 6.1.0, Serilog.AspNetCore 8.0.3, AspNetCore.HealthChecks.Oracle 8.0.1, EF Core 8.0.26
-- **Application:** JwtBearer 8.0.31
-- **Infrastructure / IoC:** EF Core 8.0.26, Oracle.EntityFrameworkCore 8.23.26200, RestSharp 114.0.0
-- **Tests:** xunit 2.5.3, Microsoft.NET.Test.Sdk 17.8.0, coverlet 6.0.0, Moq 4.20.72, Mvc.Testing 8.0.30
+- .NET 8 / ASP.NET Core Web API (Controllers)
+- Entity Framework Core 8.0.26 + Oracle.EntityFrameworkCore 8.23.26200
+- Oracle Database (FIAP)
+- JWT Bearer (`Microsoft.AspNetCore.Authentication.JwtBearer` 8.0.31)
+- RestSharp 114.0.0 (serviço externo)
+- Microsoft.AspNetCore.RateLimiting — fixed window limiter
+- Microsoft.AspNetCore.ResponseCompression — Brotli + Gzip
+- Swashbuckle.AspNetCore 6.6.2 + `.Annotations` e `.Filters` (Swagger/OpenAPI com botão Authorize)
+- **Observabilidade:** Serilog.AspNetCore 8.0.3 e `AspNetCore.HealthChecks.Oracle` 8.0.1
+- **Testes:** xUnit 2.5.3, Moq 4.20.72, Microsoft.AspNetCore.Mvc.Testing 8.0.30
 
-## Como rodar
+---
 
-Requisitos: .NET 8 SDK e acesso ao Oracle da FIAP (`oracle.fiap.com.br:1521`).
+## Instalação e Execução
 
-### Configuração
+### Pré-requisitos
 
-Tudo fica em `Biblioteca.API/appsettings.Development.json`:
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- Acesso ao banco Oracle da FIAP (`oracle.fiap.com.br:1521`)
+
+### 1. Clone o repositório
+
+```bash
+git clone https://github.com/Sabelli/CP5-dotnet-advanced-bizdev.git
+cd CP5-dotnet-advanced-bizdev
+```
+
+### 2. Configure a string de conexão e a chave do JWT
+
+Em `Biblioteca.API/appsettings.Development.json`:
 
 ```json
 {
-  "ConnectionStrings": { "Oracle": "Data Source=(...HOST=oracle.fiap.com.br...(SID=ORCL)));User Id=<RM>;Password=<senha>;" },
+  "ConnectionStrings": {
+    "Oracle": "Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=oracle.fiap.com.br)(PORT=1521))) (CONNECT_DATA=(SERVER=DEDICATED)(SID=ORCL)));User Id=SEU_RM;Password=SUA_SENHA;"
+  },
   "Secretkey": "<chave com pelo menos 32 caracteres para assinar o JWT>"
 }
 ```
 
 Não há variáveis de ambiente nem user-secrets. O serviço externo (Open Library) é público e não precisa de chave.
 
-### Banco
+### 3. Migrations
+
+Migration em `Biblioteca.Infrastructure/Data/Migrations/`:
+
+- `initdb` — schema inicial (Autor, Categoria, Livro, Usuario, Emprestimo) e índices
+
+Aplicar no banco:
 
 ```bash
 dotnet tool restore
 dotnet ef database update --project Biblioteca.Infrastructure --startup-project Biblioteca.API
 ```
 
-### API
+### 4. Execute a API
 
 ```bash
 dotnet run --project Biblioteca.API
 ```
 
-Swagger em `http://localhost:5099/swagger` (ambiente Development). Fluxo rápido:
+A API sobe em `http://localhost:5099` (ou `https://localhost:7046` no perfil `https`; ver `Biblioteca.API/Properties/launchSettings.json`).
+
+### 5. Acesse o Swagger
+
+```
+http://localhost:5099/swagger
+```
+
+Fluxo rápido:
 
 1. `POST /api/user` com `role: "admin"` e depois `POST /api/auth` para obter o `jwt`.
-2. Em **Authorize**, informe o token (apenas o JWT, o Swagger acrescenta `Bearer`).
+2. Em **Authorize**, informe só o token (o Swagger acrescenta `Bearer`).
 3. Crie Autor e Categoria, depois Livro, depois Empréstimo.
 
-### Testes
+---
+
+## Testes
+
+Testes automatizados com **xUnit** no projeto `Biblioteca.Tests` — **73 testes**, cobrindo:
+
+- **Unidade** — use cases com repositórios mockados via **Moq**, `OperationResult`, mappers e links HATEOAS, `TokenService` e `SenhaHasher`.
+- **Integração** — `WebApplicationFactory` (`Microsoft.AspNetCore.Mvc.Testing`) subindo a API em Development contra o **Oracle real** (sem InMemory/SQLite). Só o `ILivroExternoService` é substituído por mock, para não depender da internet. Cada teste apaga apenas as linhas `tb_bib_*` que criou, e os dois usuários fixos de teste (`admin.teste@biblioteca.com` e `leitor.teste@biblioteca.com`) são reaproveitados. Os testes são idempotentes.
+
+### Executar todos os testes
 
 ```bash
 dotnet test
 ```
 
-Os testes de integração usam o **Oracle real** (sem InMemory/SQLite), sobem a API em Development e substituem somente o `ILivroExternoService` por um mock para não depender da internet. Cada teste apaga as linhas `tb_bib_*` que criou. Dois usuários fixos de teste (`admin.teste@biblioteca.com` e `leitor.teste@biblioteca.com`) são criados na primeira execução e reaproveitados. Os testes são idempotentes.
+### Filtrar por trait
 
-## Endpoints
+Os testes de integração usam o trait `Integracao`, categorizado por assunto:
 
-Todos exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth` e `/health/*`.
+```bash
+dotnet test --filter "Integracao=Auth"
+dotnet test --filter "Integracao=Erros"
+dotnet test --filter "Integracao=Paginacao"
+dotnet test --filter "Integracao=Hateoas"
+dotnet test --filter "Integracao=ServicoExterno"
+```
 
-| Método | Rota | Perfil | Retornos |
-|---|---|---|---|
-| POST | `api/user` | anônimo | 201, 409 (e-mail já usado), 400 (validação) |
-| POST | `api/auth` | anônimo | 200 com `jwt`, 404 (usuário ou senha inválidos) |
-| GET | `api/autor`, `api/categoria`, `api/livro`, `api/emprestimo` `?Deslocamento=&RegistroRetornado=` | autenticado | 200 (página), 204 (vazia), 429 |
-| GET | `api/{recurso}/{id}` | autenticado | 200, 404 |
-| POST / PUT / DELETE | `api/autor`, `api/categoria`, `api/livro` (`/{id}` em PUT/DELETE) | admin | 201 / 200, 404, 400, 403 |
-| GET | `api/livro/isbn/{isbn}` | autenticado | 200, 404 (ISBN não encontrado), 400 |
-| POST | `api/emprestimo` (`livroId`, `usuarioId`, `diasEmprestimo`) | autenticado | 201, 404, 409 (livro já emprestado) |
-| PUT | `api/emprestimo/{id}/devolver` | autenticado | 200, 404, 409 (já devolvido) |
-| GET | `/health/live`, `/health/db` | anônimo | 200 |
+---
 
-Resposta de exemplo (`GET api/livro?Deslocamento=0&RegistroRetornado=1`):
+## Requisitos do CP5
+
+| Requisito | Onde está |
+|-----------|-----------|
+| Arquitetura em camadas | Projetos acima; o Domain não referencia nada e não tem atributos do EF (mapeamento em `ApplicationContext`) |
+| Operation Result | `Biblioteca.Domain/Entities/OperationResult.cs`; todo UseCase devolve `OperationResult<T>` e o Controller só repassa `StatusCode` + `Value`/`Error` |
+| Erros customizados | `Biblioteca.Domain/Errors/NoContentException`, **lançada** pelos Repositories quando não há registro e **convertida** pelos UseCases: 404 em consulta única, 204 em lista vazia, 400 em erro inesperado. Regras de negócio retornam 409 (empréstimo) |
+| Serviço externo | `Biblioteca.Infrastructure/Service/LivroExternoService.cs` (RestSharp → Open Library). Timeout de 5 s e retry manual (3 tentativas, backoff linear) apenas em 5xx/timeout/erro de rede; falha final vira `NoContentException` → 404 |
+| PageResult | `PageResponseDto<T>` com `Items`, `Deslocamento`, `RegistroRetornado`, `TotalRegistros` e `Links` |
+| HATEOAS | `LinkDto` (`href`, `rel`, `method`) em cada recurso e em cada página (`Application/Mappers`) |
+| Autenticação/Autorização | JWT Bearer (HS256, 8 h) com perfis `admin` e `leitor` |
+| Otimização | `AsNoTracking` em toda leitura, `Count` + `OrderBy` + `Skip/Take` (paginação no banco), `Include` só em Livro/Empréstimo, índices, compressão, rate limiter |
+| Testes | `Biblioteca.Tests` (73 testes) |
+
+---
+
+## Comportamentos Transversais
+
+### Paginação
+
+Todos os endpoints de listagem aceitam `Deslocamento` e `RegistroRetornado`:
+
+| Param | Default | Regras |
+|-------|---------|--------|
+| `Deslocamento` | `0` | valores negativos são tratados como `0` |
+| `RegistroRetornado` | `30` | aplicado quando vem `0` ou negativo |
+
+Exemplo: `GET /api/livro?Deslocamento=0&RegistroRetornado=10`
+
+A resposta (`200 OK`) vem em um envelope com metadados de paginação e links HATEOAS (`PageResponseDto<T>`), ou `204 No Content` quando vazio. Ordenação por `Id` ascendente.
 
 ```json
 {
-  "items": [{ "id": 2, "isbn": "9788535902778", "titulo": "Dom Casmurro", "anoPublicacao": 1899,
-              "autor": "Machado de Assis", "categoria": "Romance",
-              "links": [{ "href": "/api/livro/2", "rel": "self", "method": "GET" },
-                        { "href": "/api/livro/2", "rel": "update_livro", "method": "PUT" },
-                        { "href": "/api/livro/2", "rel": "delete_livro", "method": "DELETE" }] }],
-  "deslocamento": 0, "registroRetornado": 1, "totalRegistros": 1,
-  "links": [{ "href": "/api/livro?Deslocamento=0&RegistroRetornado=1", "rel": "self", "method": "GET" },
-            { "href": "/api/livro", "rel": "create_livro", "method": "POST" }]
+  "items": [
+    {
+      "id": 2, "isbn": "9788535902778", "titulo": "Dom Casmurro", "anoPublicacao": 1899,
+      "autor": "Machado de Assis", "categoria": "Romance",
+      "links": [
+        { "href": "/api/livro/2", "rel": "self", "method": "GET" },
+        { "href": "/api/livro/2", "rel": "update_livro", "method": "PUT" },
+        { "href": "/api/livro/2", "rel": "delete_livro", "method": "DELETE" }
+      ]
+    }
+  ],
+  "deslocamento": 0,
+  "registroRetornado": 1,
+  "totalRegistros": 1,
+  "links": [
+    { "href": "/api/livro?Deslocamento=0&RegistroRetornado=1", "rel": "self", "method": "GET" },
+    { "href": "/api/livro", "rel": "create_livro", "method": "POST" }
+  ]
 }
 ```
+
+### HATEOAS
+
+- Cada recurso traz `self`, `update_*` e `delete_*`.
+- `Emprestimo` traz `devolver_emprestimo` somente enquanto está aberto.
+- Cada página traz `self`, `create_*`, `next` e `prev` (os dois últimos quando existem).
+
+### Rate Limiting
+
+Fixed window (`politica_listagem`) aplicada em todo GET de listagem (Autor, Categoria, Livro, Empréstimo): **30 requisições a cada 10 segundos**, sem fila. Ao exceder: **429 Too Many Requests**.
+
+### Compressão de Resposta
+
+Brotli e Gzip habilitados (nível `Fastest`), negociados via header `Accept-Encoding`.
+
+```bash
+curl -H "Accept-Encoding: gzip" -i http://localhost:5099/api/autor -H "Authorization: Bearer <jwt>"
+```
+
+A resposta deve trazer `Content-Encoding: gzip` (ou `br`, se negociado Brotli).
+
+### Autenticação e Autorização
+
+| Situação | Resultado |
+|----------|-----------|
+| Sem token ou token inválido | 401 |
+| `leitor` tentando POST/PUT/DELETE de Autor, Categoria ou Livro | 403 |
+| `leitor` consultando | 200 / 204 |
+| `admin` | acesso total |
+| Empréstimos | qualquer usuário autenticado |
+| `api/user`, `api/auth`, `/health/*` | anônimos |
+
+Senhas armazenadas com PBKDF2-SHA256 (100 mil iterações, salt aleatório). Login com e-mail ou senha incorretos retorna 404.
+
+---
+
+## Observabilidade
+
+### Logging (Serilog)
+
+Console + arquivo (`logs/api-<data>.log`, rotação diária, retenção de 7 arquivos). Nível mínimo `Information`; `Microsoft.AspNetCore` e `Microsoft.EntityFrameworkCore` em `Warning`.
+
+### Health Check
+
+| Endpoint | Tipo | 200 | 503 |
+|----------|------|-----|-----|
+| `GET /health/live` | liveness | processo saudável | processo travado |
+| `GET /health/db` | readiness | banco Oracle acessível | banco indisponível |
+
+---
+
+## Rotas
+
+Todas exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth` e `/health/*`.
+
+### Usuários — `/api/user`
+
+| Método | Rota | Descrição | Retorno |
+|--------|------|-----------|---------|
+| POST | `/api/user` | Cadastra usuário | 201 / 409 (e-mail já usado) / 400 |
+
+```json
+{ "nome": "Maria Silva", "email": "maria@biblioteca.com", "password": "Senha123", "confirmPassword": "Senha123", "role": "admin" }
+```
+
+> `role` aceita `admin` ou `leitor`.
+
+### Autenticação — `/api/auth`
+
+| Método | Rota | Descrição | Retorno |
+|--------|------|-----------|---------|
+| POST | `/api/auth` | Login, devolve `jwt` | 200 / 404 (usuário ou senha inválidos) / 400 |
+
+```json
+{ "email": "maria@biblioteca.com", "senha": "Senha123" }
+```
+
+---
+
+### Autores — `/api/autor`
+
+| Método | Rota | Descrição | Perfil | Retorno |
+|--------|------|-----------|--------|---------|
+| GET | `/api/autor` | Lista autores (paginado) | autenticado | 200 / 204 / 429 |
+| GET | `/api/autor/{id}` | Busca autor por id | autenticado | 200 / 404 |
+| POST | `/api/autor` | Cria autor | admin | 201 / 400 / 403 |
+| PUT | `/api/autor/{id}` | Atualiza autor | admin | 200 / 404 / 400 / 403 |
+| DELETE | `/api/autor/{id}` | Remove autor | admin | 200 / 404 / 403 |
+
+**POST / PUT — Body:**
+```json
+{ "nome": "Machado de Assis", "nacionalidade": "Brasileira" }
+```
+
+---
+
+### Categorias — `/api/categoria`
+
+| Método | Rota | Descrição | Perfil | Retorno |
+|--------|------|-----------|--------|---------|
+| GET | `/api/categoria` | Lista categorias (paginado) | autenticado | 200 / 204 / 429 |
+| GET | `/api/categoria/{id}` | Busca categoria por id | autenticado | 200 / 404 |
+| POST | `/api/categoria` | Cria categoria | admin | 201 / 400 / 403 |
+| PUT | `/api/categoria/{id}` | Atualiza categoria | admin | 200 / 404 / 400 / 403 |
+| DELETE | `/api/categoria/{id}` | Remove categoria | admin | 200 / 404 / 403 |
+
+**POST / PUT — Body:**
+```json
+{ "nome": "Romance" }
+```
+
+---
+
+### Livros — `/api/livro`
+
+| Método | Rota | Descrição | Perfil | Retorno |
+|--------|------|-----------|--------|---------|
+| GET | `/api/livro` | Lista livros (paginado) | autenticado | 200 / 204 / 429 |
+| GET | `/api/livro/{id}` | Busca livro por id | autenticado | 200 / 404 |
+| GET | `/api/livro/isbn/{isbn}` | Consulta o livro no serviço externo (Open Library) | autenticado | 200 / 404 (ISBN não encontrado) / 400 |
+| POST | `/api/livro` | Cria livro | admin | 201 / 404 (autor ou categoria inexistente) / 400 / 403 |
+| PUT | `/api/livro/{id}` | Atualiza livro | admin | 200 / 404 / 400 / 403 |
+| DELETE | `/api/livro/{id}` | Remove livro | admin | 200 / 404 / 403 |
+
+**POST / PUT — Body:**
+```json
+{
+  "isbn": "9788535902778",
+  "titulo": "Dom Casmurro",
+  "anoPublicacao": 1899,
+  "autorId": 1,
+  "categoriaId": 1
+}
+```
+
+---
+
+### Empréstimos — `/api/emprestimo`
+
+| Método | Rota | Descrição | Retorno |
+|--------|------|-----------|---------|
+| GET | `/api/emprestimo` | Lista empréstimos (paginado) | 200 / 204 / 429 |
+| GET | `/api/emprestimo/{id}` | Busca empréstimo por id | 200 / 404 |
+| POST | `/api/emprestimo` | Empresta um livro | 201 / 404 / 409 (livro já emprestado) / 400 |
+| PUT | `/api/emprestimo/{id}/devolver` | Devolve o livro | 200 / 404 / 409 (já devolvido) |
+
+**POST — Body:**
+```json
+{ "livroId": 1, "usuarioId": 1, "diasEmprestimo": 14 }
+```
+
+> `diasEmprestimo` vai de 1 a 90 (padrão 14).
+
+---
+
+### Health — `/health`
+
+| Método | Rota | Descrição | Retorno |
+|--------|------|-----------|---------|
+| GET | `/health/live` | Liveness | 200 / 503 |
+| GET | `/health/db` | Readiness — banco Oracle | 200 / 503 |
+
+---
+
+## Evidências
+
+A demonstração completa (Swagger com CRUD, `dotnet test` verde, erros 404/204/409/400, consulta por ISBN, paginação, links HATEOAS e login 200/401/403) está no vídeo, linkado no topo deste README.
+
+---
+
+## Observações
+
+- Livro já emprestado não pode ser emprestado de novo (409) e empréstimo já devolvido não pode ser devolvido outra vez (409).
+- `POST /api/livro` valida a existência de Autor e Categoria; se algum não existir, retorna 404.
+- E-mail de usuário é único (índice no banco e checagem na aplicação), com 409 em duplicata.
+- Todas as respostas usam DTOs dedicados (`Get*Dto`), nunca a entidade EF crua.
+- Repositories usam `AsNoTracking` e lançam `NoContentException`, que os UseCases convertem em `OperationResult`.
