@@ -59,7 +59,8 @@ public class EmprestimoRepository : IEmprestimoRepository
     {
         try
         {
-            return await _context.Emprestimo.AnyAsync(x => x.LivroId == LivroId && x.DataDevolucao == null);
+            // CountAsync em vez de AnyAsync: o provider Oracle gera "CASE WHEN EXISTS ... THEN True" e falha com ORA-00904.
+            return await _context.Emprestimo.CountAsync(x => x.LivroId == LivroId && x.DataDevolucao == null) > 0;
         }
         catch (Exception ex) { throw new Exception(ex.Message, ex); }
     }
