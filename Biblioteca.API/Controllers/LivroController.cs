@@ -1,8 +1,12 @@
+using Biblioteca.API.Doc.Samples;
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
+using Biblioteca.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace Biblioteca.API.Controllers;
 
@@ -20,7 +24,14 @@ public class LivroController : ControllerBase
 
     [HttpGet]
     [EnableRateLimiting("politica_listagem")]
-    public async Task<IActionResult> Get(int Deslocamento, int RegistroRetornado)
+    [SwaggerOperation(Summary = "Lista livros paginados", Description = "Retorna os livros com paginação por `Deslocamento` e `RegistroRetornado`. Requer autenticação.")]
+    [SwaggerResponse(statusCode: 200, description: "Lista de livros", type: typeof(PageResponseDto<GetLivroDto>))]
+    [SwaggerResponse(statusCode: 204, description: "Nenhum livro encontrado")]
+    [SwaggerResponse(statusCode: 400, description: "Erro ao buscar livros", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(LivroResponseListSample))]
+    public async Task<IActionResult> Get(
+        [SwaggerParameter("Quantidade de registros a pular")] int Deslocamento,
+        [SwaggerParameter("Quantidade de registros retornados")] int RegistroRetornado)
     {
         var resultado = await _livroUseCase.ObterTodosAsync(Deslocamento, RegistroRetornado);
 
@@ -30,7 +41,12 @@ public class LivroController : ControllerBase
     }
 
     [HttpGet("isbn/{isbn}")]
-    public async Task<IActionResult> GetPorIsbn(string isbn)
+    [SwaggerOperation(Summary = "Consulta livro por ISBN", Description = "Busca dados do livro pelo ISBN em serviço externo.")]
+    [SwaggerResponse(statusCode: 200, description: "Dados do livro", type: typeof(EdicaoLivroModel))]
+    [SwaggerResponse(statusCode: 400, description: "ISBN inválido ou erro na consulta", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "ISBN não encontrado", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(LivroIsbnResponseSample))]
+    public async Task<IActionResult> GetPorIsbn([FromRoute, SwaggerParameter("ISBN do livro")] string isbn)
     {
         var resultado = await _livroUseCase.ObterPorIsbnAsync(isbn);
 
@@ -40,7 +56,12 @@ public class LivroController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> Get(int id)
+    [SwaggerOperation(Summary = "Obtém livro por id")]
+    [SwaggerResponse(statusCode: 200, description: "Livro encontrado", type: typeof(GetLivroDto))]
+    [SwaggerResponse(statusCode: 400, description: "Erro ao obter livro", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Livro não encontrado", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(LivroResponseSample))]
+    public async Task<IActionResult> Get([FromRoute, SwaggerParameter("Id do livro")] int id)
     {
         var resultado = await _livroUseCase.ObterUmAsync(id);
 
@@ -51,6 +72,12 @@ public class LivroController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpPost]
+    [SwaggerOperation(Summary = "Cadastra livro", Description = "Requer perfil `admin`.")]
+    [SwaggerRequestExample(typeof(PostLivroDto), typeof(LivroRequestSample))]
+    [SwaggerResponse(statusCode: 201, description: "Livro criado", type: typeof(GetLivroDto))]
+    [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Autor ou categoria não encontrado", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 201, typeof(LivroResponseSample))]
     public async Task<IActionResult> Post([FromBody] PostLivroDto dto)
     {
         var resultado = await _livroUseCase.AdicionarAsync(dto);
@@ -62,7 +89,13 @@ public class LivroController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, [FromBody] PostLivroDto dto)
+    [SwaggerOperation(Summary = "Edita livro", Description = "Requer perfil `admin`.")]
+    [SwaggerRequestExample(typeof(PostLivroDto), typeof(LivroRequestSample))]
+    [SwaggerResponse(statusCode: 200, description: "Livro atualizado", type: typeof(GetLivroDto))]
+    [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Livro não encontrado", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(LivroResponseSample))]
+    public async Task<IActionResult> Put([FromRoute, SwaggerParameter("Id do livro")] int id, [FromBody] PostLivroDto dto)
     {
         var resultado = await _livroUseCase.EditarAsync(id, dto);
 
@@ -73,7 +106,12 @@ public class LivroController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    [SwaggerOperation(Summary = "Remove livro", Description = "Requer perfil `admin`.")]
+    [SwaggerResponse(statusCode: 200, description: "Livro removido", type: typeof(GetLivroDto))]
+    [SwaggerResponse(statusCode: 400, description: "Erro ao remover livro", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Livro não encontrado", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(LivroResponseSample))]
+    public async Task<IActionResult> Delete([FromRoute, SwaggerParameter("Id do livro")] int id)
     {
         var resultado = await _livroUseCase.DeletarAsync(id);
 

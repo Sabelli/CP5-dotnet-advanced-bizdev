@@ -1,8 +1,11 @@
+using Biblioteca.API.Doc.Samples;
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace Biblioteca.API.Controllers;
 
@@ -20,7 +23,14 @@ public class CategoriaController : ControllerBase
 
     [HttpGet]
     [EnableRateLimiting("politica_listagem")]
-    public async Task<IActionResult> Get(int Deslocamento, int RegistroRetornado)
+    [SwaggerOperation(Summary = "Lista categorias paginadas", Description = "Retorna as categorias com paginação por `Deslocamento` e `RegistroRetornado`. Requer autenticação.")]
+    [SwaggerResponse(statusCode: 200, description: "Lista de categorias", type: typeof(PageResponseDto<GetCategoriaDto>))]
+    [SwaggerResponse(statusCode: 204, description: "Nenhuma categoria encontrada")]
+    [SwaggerResponse(statusCode: 400, description: "Erro ao buscar categorias", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(CategoriaResponseListSample))]
+    public async Task<IActionResult> Get(
+        [SwaggerParameter("Quantidade de registros a pular")] int Deslocamento,
+        [SwaggerParameter("Quantidade de registros retornados")] int RegistroRetornado)
     {
         var resultado = await _categoriaUseCase.ObterTodosAsync(Deslocamento, RegistroRetornado);
 
@@ -30,7 +40,12 @@ public class CategoriaController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> Get(int id)
+    [SwaggerOperation(Summary = "Obtém categoria por id")]
+    [SwaggerResponse(statusCode: 200, description: "Categoria encontrada", type: typeof(GetCategoriaDto))]
+    [SwaggerResponse(statusCode: 400, description: "Erro ao obter categoria", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Categoria não encontrada", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(CategoriaResponseSample))]
+    public async Task<IActionResult> Get([FromRoute, SwaggerParameter("Id da categoria")] int id)
     {
         var resultado = await _categoriaUseCase.ObterUmAsync(id);
 
@@ -41,6 +56,11 @@ public class CategoriaController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpPost]
+    [SwaggerOperation(Summary = "Cadastra categoria", Description = "Requer perfil `admin`.")]
+    [SwaggerRequestExample(typeof(PostCategoriaDto), typeof(CategoriaRequestSample))]
+    [SwaggerResponse(statusCode: 201, description: "Categoria criada", type: typeof(GetCategoriaDto))]
+    [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 201, typeof(CategoriaResponseSample))]
     public async Task<IActionResult> Post([FromBody] PostCategoriaDto dto)
     {
         var resultado = await _categoriaUseCase.AdicionarAsync(dto);
@@ -52,7 +72,13 @@ public class CategoriaController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, [FromBody] PostCategoriaDto dto)
+    [SwaggerOperation(Summary = "Edita categoria", Description = "Requer perfil `admin`.")]
+    [SwaggerRequestExample(typeof(PostCategoriaDto), typeof(CategoriaRequestSample))]
+    [SwaggerResponse(statusCode: 200, description: "Categoria atualizada", type: typeof(GetCategoriaDto))]
+    [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Categoria não encontrada", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(CategoriaResponseSample))]
+    public async Task<IActionResult> Put([FromRoute, SwaggerParameter("Id da categoria")] int id, [FromBody] PostCategoriaDto dto)
     {
         var resultado = await _categoriaUseCase.EditarAsync(id, dto);
 
@@ -63,7 +89,12 @@ public class CategoriaController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    [SwaggerOperation(Summary = "Remove categoria", Description = "Requer perfil `admin`.")]
+    [SwaggerResponse(statusCode: 200, description: "Categoria removida", type: typeof(GetCategoriaDto))]
+    [SwaggerResponse(statusCode: 400, description: "Erro ao remover categoria", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Categoria não encontrada", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(CategoriaResponseSample))]
+    public async Task<IActionResult> Delete([FromRoute, SwaggerParameter("Id da categoria")] int id)
     {
         var resultado = await _categoriaUseCase.DeletarAsync(id);
 

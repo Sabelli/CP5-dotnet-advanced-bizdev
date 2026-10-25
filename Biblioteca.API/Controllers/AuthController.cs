@@ -1,7 +1,10 @@
+using Biblioteca.API.Doc.Samples;
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace Biblioteca.API.Controllers;
 
@@ -18,6 +21,12 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost]
+    [SwaggerOperation(Summary = "Autentica usuário", Description = "Retorna o JWT para uso no header `Authorization: Bearer`.")]
+    [SwaggerRequestExample(typeof(PostAuthDto), typeof(AuthRequestSample))]
+    [SwaggerResponse(statusCode: 200, description: "Autenticado", type: typeof(GetAuthDto))]
+    [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Usuário ou senha inválidos", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 200, typeof(AuthResponseSample))]
     public async Task<IActionResult> Post([FromBody] PostAuthDto model)
     {
         var resultado = await _userUseCase.AutenticaUserAsync(model);

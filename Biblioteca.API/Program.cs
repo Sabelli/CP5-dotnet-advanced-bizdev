@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -23,6 +24,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
+    c.ExampleFilters();
 
     var securitySchema = new OpenApiSecurityScheme
     {
@@ -44,6 +46,7 @@ builder.Services.AddSwaggerGen(c =>
         { securitySchema, new[] { "Bearer" } }
     });
 });
+builder.Services.AddSwaggerExamplesFromAssemblyOf<Program>();
 
 builder.Services.AddHealthChecks()
     // Liveness

@@ -1,7 +1,10 @@
+using Biblioteca.API.Doc.Samples;
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace Biblioteca.API.Controllers;
 
@@ -18,6 +21,12 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
+    [SwaggerOperation(Summary = "Cadastra usuário", Description = "`Role` aceita `admin` ou `leitor`.")]
+    [SwaggerRequestExample(typeof(PostUserDto), typeof(UserRequestSample))]
+    [SwaggerResponse(statusCode: 201, description: "Usuário criado", type: typeof(GetUserDto))]
+    [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
+    [SwaggerResponse(statusCode: 409, description: "E-mail já cadastrado", type: typeof(string))]
+    [SwaggerResponseExample(statusCode: 201, typeof(UserResponseSample))]
     public async Task<IActionResult> Post([FromBody] PostUserDto model)
     {
         var resultado = await _userUseCase.AdicionarUserAsync(model);
