@@ -20,8 +20,24 @@ public class AuthController : ControllerBase
         _userUseCase = userUseCase;
     }
 
+    /// <summary>
+    /// Autentica usuário
+    /// </summary>
+    /// <returns>Autenticado</returns>
     [HttpPost]
-    [SwaggerOperation(Summary = "Autentica usuário", Description = "Retorna o JWT para uso no header `Authorization: Bearer`.")]
+    [SwaggerOperation(
+        Summary = "Autentica usuário",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 200 (OK):** Autenticado.
+        * **Status 400 (Bad Request):** Dados inválidos.
+        * **Status 404 (Not Found):** Usuário ou senha inválidos.
+
+        ## Observações:
+        * Endpoint público, não exige autenticação.
+        * Use o JWT retornado no botão **Authorize** como `Bearer {token}`.
+        """
+    )]
     [SwaggerRequestExample(typeof(PostAuthDto), typeof(AuthRequestSample))]
     [SwaggerResponse(statusCode: 200, description: "Autenticado", type: typeof(GetAuthDto))]
     [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]

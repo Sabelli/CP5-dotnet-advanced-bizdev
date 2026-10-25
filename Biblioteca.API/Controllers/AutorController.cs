@@ -21,9 +21,26 @@ public class AutorController : ControllerBase
         _autorUseCase = autorUseCase;
     }
 
+    /// <summary>
+    /// Lista autores paginados
+    /// </summary>
+    /// <returns>Lista de autores</returns>
     [HttpGet]
     [EnableRateLimiting("politica_listagem")]
-    [SwaggerOperation(Summary = "Lista autores paginados", Description = "Retorna os autores com paginação por `Deslocamento` e `RegistroRetornado`. Requer autenticação.")]
+    [SwaggerOperation(
+        Summary = "Lista autores paginados",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 200 (OK):** Lista de autores.
+        * **Status 204 (No Content):** Nenhum autor encontrado.
+        * **Status 400 (Bad Request):** Erro ao buscar autores.
+
+        ## Observações:
+        * Requer autenticação (JWT Bearer).
+        * Paginação via **Deslocamento** (registros a pular) e **RegistroRetornado** (tamanho da página).
+        * A resposta inclui o **TotalRegistros** e links HATEOAS.
+        """
+    )]
     [SwaggerResponse(statusCode: 200, description: "Lista de autores", type: typeof(PageResponseDto<GetAutorDto>))]
     [SwaggerResponse(statusCode: 204, description: "Nenhum autor encontrado")]
     [SwaggerResponse(statusCode: 400, description: "Erro ao buscar autores", type: typeof(string))]
@@ -39,8 +56,23 @@ public class AutorController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    /// <summary>
+    /// Obtém autor por id
+    /// </summary>
+    /// <returns>Autor encontrado</returns>
     [HttpGet("{id}")]
-    [SwaggerOperation(Summary = "Obtém autor por id")]
+    [SwaggerOperation(
+        Summary = "Obtém autor por id",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 200 (OK):** Autor encontrado.
+        * **Status 400 (Bad Request):** Erro ao obter autor.
+        * **Status 404 (Not Found):** Autor não encontrado.
+
+        ## Observações:
+        * Requer autenticação (JWT Bearer).
+        """
+    )]
     [SwaggerResponse(statusCode: 200, description: "Autor encontrado", type: typeof(GetAutorDto))]
     [SwaggerResponse(statusCode: 400, description: "Erro ao obter autor", type: typeof(string))]
     [SwaggerResponse(statusCode: 404, description: "Autor não encontrado", type: typeof(string))]
@@ -54,9 +86,23 @@ public class AutorController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    /// <summary>
+    /// Cadastra autor
+    /// </summary>
+    /// <returns>Autor criado</returns>
     [Authorize(Roles = "admin")]
     [HttpPost]
-    [SwaggerOperation(Summary = "Cadastra autor", Description = "Requer perfil `admin`.")]
+    [SwaggerOperation(
+        Summary = "Cadastra autor",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 201 (Created):** Autor criado.
+        * **Status 400 (Bad Request):** Dados inválidos.
+
+        ## Observações:
+        * Requer autenticação com perfil **admin**.
+        """
+    )]
     [SwaggerRequestExample(typeof(PostAutorDto), typeof(AutorRequestSample))]
     [SwaggerResponse(statusCode: 201, description: "Autor criado", type: typeof(GetAutorDto))]
     [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
@@ -70,9 +116,24 @@ public class AutorController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    /// <summary>
+    /// Edita autor
+    /// </summary>
+    /// <returns>Autor atualizado</returns>
     [Authorize(Roles = "admin")]
     [HttpPut("{id}")]
-    [SwaggerOperation(Summary = "Edita autor", Description = "Requer perfil `admin`.")]
+    [SwaggerOperation(
+        Summary = "Edita autor",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 200 (OK):** Autor atualizado.
+        * **Status 400 (Bad Request):** Dados inválidos.
+        * **Status 404 (Not Found):** Autor não encontrado.
+
+        ## Observações:
+        * Requer autenticação com perfil **admin**.
+        """
+    )]
     [SwaggerRequestExample(typeof(PostAutorDto), typeof(AutorRequestSample))]
     [SwaggerResponse(statusCode: 200, description: "Autor atualizado", type: typeof(GetAutorDto))]
     [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
@@ -87,9 +148,24 @@ public class AutorController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    /// <summary>
+    /// Remove autor
+    /// </summary>
+    /// <returns>Autor removido</returns>
     [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
-    [SwaggerOperation(Summary = "Remove autor", Description = "Requer perfil `admin`.")]
+    [SwaggerOperation(
+        Summary = "Remove autor",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 200 (OK):** Autor removido.
+        * **Status 400 (Bad Request):** Erro ao remover autor.
+        * **Status 404 (Not Found):** Autor não encontrado.
+
+        ## Observações:
+        * Requer autenticação com perfil **admin**.
+        """
+    )]
     [SwaggerResponse(statusCode: 200, description: "Autor removido", type: typeof(GetAutorDto))]
     [SwaggerResponse(statusCode: 400, description: "Erro ao remover autor", type: typeof(string))]
     [SwaggerResponse(statusCode: 404, description: "Autor não encontrado", type: typeof(string))]

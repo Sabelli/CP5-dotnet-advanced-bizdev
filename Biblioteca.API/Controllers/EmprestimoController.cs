@@ -21,9 +21,26 @@ public class EmprestimoController : ControllerBase
         _emprestimoUseCase = emprestimoUseCase;
     }
 
+    /// <summary>
+    /// Lista empréstimos paginados
+    /// </summary>
+    /// <returns>Lista de empréstimos</returns>
     [HttpGet]
     [EnableRateLimiting("politica_listagem")]
-    [SwaggerOperation(Summary = "Lista empréstimos paginados", Description = "Retorna os empréstimos com paginação por `Deslocamento` e `RegistroRetornado`. Requer autenticação.")]
+    [SwaggerOperation(
+        Summary = "Lista empréstimos paginados",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 200 (OK):** Lista de empréstimos.
+        * **Status 204 (No Content):** Nenhum empréstimo encontrado.
+        * **Status 400 (Bad Request):** Erro ao buscar empréstimos.
+
+        ## Observações:
+        * Requer autenticação (JWT Bearer).
+        * Paginação via **Deslocamento** (registros a pular) e **RegistroRetornado** (tamanho da página).
+        * A resposta inclui o **TotalRegistros** e links HATEOAS.
+        """
+    )]
     [SwaggerResponse(statusCode: 200, description: "Lista de empréstimos", type: typeof(PageResponseDto<GetEmprestimoDto>))]
     [SwaggerResponse(statusCode: 204, description: "Nenhum empréstimo encontrado")]
     [SwaggerResponse(statusCode: 400, description: "Erro ao buscar empréstimos", type: typeof(string))]
@@ -39,8 +56,23 @@ public class EmprestimoController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    /// <summary>
+    /// Obtém empréstimo por id
+    /// </summary>
+    /// <returns>Empréstimo encontrado</returns>
     [HttpGet("{id}")]
-    [SwaggerOperation(Summary = "Obtém empréstimo por id")]
+    [SwaggerOperation(
+        Summary = "Obtém empréstimo por id",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 200 (OK):** Empréstimo encontrado.
+        * **Status 400 (Bad Request):** Erro ao obter empréstimo.
+        * **Status 404 (Not Found):** Empréstimo não encontrado.
+
+        ## Observações:
+        * Requer autenticação (JWT Bearer).
+        """
+    )]
     [SwaggerResponse(statusCode: 200, description: "Empréstimo encontrado", type: typeof(GetEmprestimoDto))]
     [SwaggerResponse(statusCode: 400, description: "Erro ao obter empréstimo", type: typeof(string))]
     [SwaggerResponse(statusCode: 404, description: "Empréstimo não encontrado", type: typeof(string))]
@@ -54,8 +86,25 @@ public class EmprestimoController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    /// <summary>
+    /// Registra empréstimo
+    /// </summary>
+    /// <returns>Empréstimo criado</returns>
     [HttpPost]
-    [SwaggerOperation(Summary = "Registra empréstimo", Description = "Empresta um livro a um usuário por `DiasEmprestimo` dias.")]
+    [SwaggerOperation(
+        Summary = "Registra empréstimo",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 201 (Created):** Empréstimo criado.
+        * **Status 400 (Bad Request):** Dados inválidos.
+        * **Status 404 (Not Found):** Livro ou usuário não encontrado.
+        * **Status 409 (Conflict):** Livro já emprestado.
+
+        ## Observações:
+        * Requer autenticação (JWT Bearer).
+        * Informe **LivroId**, **UsuarioId** e **DiasEmprestimo** (1 a 90, padrão 14).
+        """
+    )]
     [SwaggerRequestExample(typeof(PostEmprestimoDto), typeof(EmprestimoRequestSample))]
     [SwaggerResponse(statusCode: 201, description: "Empréstimo criado", type: typeof(GetEmprestimoDto))]
     [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
@@ -71,8 +120,25 @@ public class EmprestimoController : ControllerBase
         return StatusCode(resultado.StatusCode, resultado.Value);
     }
 
+    /// <summary>
+    /// Devolve empréstimo
+    /// </summary>
+    /// <returns>Devolução registrada</returns>
     [HttpPut("{id}/devolver")]
-    [SwaggerOperation(Summary = "Devolve empréstimo", Description = "Registra a devolução do livro.")]
+    [SwaggerOperation(
+        Summary = "Devolve empréstimo",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 200 (OK):** Devolução registrada.
+        * **Status 400 (Bad Request):** Erro ao devolver.
+        * **Status 404 (Not Found):** Empréstimo não encontrado.
+        * **Status 409 (Conflict):** Empréstimo já devolvido.
+
+        ## Observações:
+        * Requer autenticação (JWT Bearer).
+        * Preenche a **DataDevolucao** do empréstimo.
+        """
+    )]
     [SwaggerResponse(statusCode: 200, description: "Devolução registrada", type: typeof(GetEmprestimoDto))]
     [SwaggerResponse(statusCode: 400, description: "Erro ao devolver", type: typeof(string))]
     [SwaggerResponse(statusCode: 404, description: "Empréstimo não encontrado", type: typeof(string))]

@@ -20,8 +20,25 @@ public class UserController : ControllerBase
         _userUseCase = userUseCase;
     }
 
+    /// <summary>
+    /// Cadastra usuário
+    /// </summary>
+    /// <returns>Usuário criado</returns>
     [HttpPost]
-    [SwaggerOperation(Summary = "Cadastra usuário", Description = "`Role` aceita `admin` ou `leitor`.")]
+    [SwaggerOperation(
+        Summary = "Cadastra usuário",
+        Description = """
+        ## Informações do Retorno:
+        * **Status 201 (Created):** Usuário criado.
+        * **Status 400 (Bad Request):** Dados inválidos.
+        * **Status 409 (Conflict):** E-mail já cadastrado.
+
+        ## Observações:
+        * Endpoint público, não exige autenticação.
+        * **Role** aceita `admin` ou `leitor`.
+        * A senha deve ter no mínimo 6 caracteres e coincidir com **ConfirmPassword**.
+        """
+    )]
     [SwaggerRequestExample(typeof(PostUserDto), typeof(UserRequestSample))]
     [SwaggerResponse(statusCode: 201, description: "Usuário criado", type: typeof(GetUserDto))]
     [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
