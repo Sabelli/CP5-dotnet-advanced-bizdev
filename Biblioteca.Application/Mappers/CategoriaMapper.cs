@@ -13,6 +13,14 @@ public static class CategoriaMapper
         {
             Id = obj.Id,
             Nome = obj.Nome,
-            Links = links?.ToList() ?? new List<LinkDto>()
+            Links = links?.ToList() ?? BuildLinks(obj.Id)
+        };
+
+    public static List<LinkDto> BuildLinks(int id) =>
+        new()
+        {
+            new($"/api/categoria/{id}", "self", "GET"),
+            new($"/api/categoria/{id}", "update_categoria", "PUT"),
+            new($"/api/categoria/{id}", "delete_categoria", "DELETE")
         };
 }

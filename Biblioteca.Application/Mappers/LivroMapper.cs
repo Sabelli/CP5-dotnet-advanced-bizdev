@@ -24,6 +24,14 @@ public static class LivroMapper
             AnoPublicacao = obj.AnoPublicacao,
             Autor = obj.Autor?.Nome ?? string.Empty,
             Categoria = obj.Categoria?.Nome ?? string.Empty,
-            Links = links?.ToList() ?? new List<LinkDto>()
+            Links = links?.ToList() ?? BuildLinks(obj.Id)
+        };
+
+    public static List<LinkDto> BuildLinks(int id) =>
+        new()
+        {
+            new($"/api/livro/{id}", "self", "GET"),
+            new($"/api/livro/{id}", "update_livro", "PUT"),
+            new($"/api/livro/{id}", "delete_livro", "DELETE")
         };
 }

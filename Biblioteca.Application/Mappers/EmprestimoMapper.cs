@@ -28,6 +28,16 @@ public static class EmprestimoMapper
             DataEmprestimo = obj.DataEmprestimo,
             DataPrevistaDevolucao = obj.DataPrevistaDevolucao,
             DataDevolucao = obj.DataDevolucao,
-            Links = links?.ToList() ?? new List<LinkDto>()
+            Links = links?.ToList() ?? BuildLinks(obj)
         };
+
+    public static List<LinkDto> BuildLinks(EmprestimoEntity obj)
+    {
+        var links = new List<LinkDto> { new($"/api/emprestimo/{obj.Id}", "self", "GET") };
+
+        if (obj.DataDevolucao == null)
+            links.Add(new($"/api/emprestimo/{obj.Id}/devolver", "devolver_emprestimo", "PUT"));
+
+        return links;
+    }
 }
