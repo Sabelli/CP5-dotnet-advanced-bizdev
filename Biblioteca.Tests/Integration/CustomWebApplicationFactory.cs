@@ -1,3 +1,4 @@
+using Biblioteca.Domain.Entities;
 using Biblioteca.Domain.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -12,6 +13,13 @@ namespace Biblioteca.Tests.Integration;
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     public Mock<ILivroExternoService> LivroExternoMock { get; } = new();
+
+    public CustomWebApplicationFactory()
+    {
+        // Padrão: qualquer ISBN existe na OpenLibrary. Testes específicos sobrescrevem com Setup próprio.
+        LivroExternoMock.Setup(s => s.ObterPorIsbnAsync(It.IsAny<string>()))
+            .ReturnsAsync((string isbn) => new EdicaoLivroModel { Isbn = isbn, Titulo = "Título Externo", AnoPublicacao = 2000 });
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

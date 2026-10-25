@@ -42,6 +42,190 @@ public class LivroUseCaseTests
         // Arrange
         _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
         _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        ConfigurarIsbnExterno();
+        ConfigurarAdicionar();
+
+        // Act
+        var resultado = await _useCase.AdicionarAsync(NovoLivro());
+
+        // Assert
+        Assert.Equal(201, resultado.StatusCode);
+        Assert.Equal("Machado", resultado.Value?.Autor);
+        Assert.Equal("Romance", resultado.Value?.Categoria);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Adicionar_SemTituloEAno_DevePreencherComDadosExternos()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        ConfigurarIsbnExterno();
+        ConfigurarAdicionar();
+        var dto = NovoLivro();
+        dto.Titulo = null;
+        dto.AnoPublicacao = null;
+
+        // Act
+        var resultado = await _useCase.AdicionarAsync(dto);
+
+        // Assert
+        Assert.Equal(201, resultado.StatusCode);
+        _livroRepository.Verify(r => r.AdicionarAsync(It.Is<LivroEntity>(e => e.Titulo == "Título Externo" && e.AnoPublicacao == 2002)), Times.Once);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Adicionar_ComTituloEAno_DeveManterOsDoCliente()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        ConfigurarIsbnExterno();
+        ConfigurarAdicionar();
+
+        // Act
+        await _useCase.AdicionarAsync(NovoLivro());
+
+        // Assert
+        _livroRepository.Verify(r => r.AdicionarAsync(It.Is<LivroEntity>(e => e.Titulo == "Dom Casmurro" && e.AnoPublicacao == 1899)), Times.Once);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Adicionar_IsbnJaCadastrado_DeveRetornar409SemConsultarExterno()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        _livroRepository.Setup(r => r.IsbnExisteAsync("9788535902778", null)).ReturnsAsync(true);
+
+        // Act
+        var resultado = await _useCase.AdicionarAsync(NovoLivro());
+
+        // Assert
+        Assert.Equal(409, resultado.StatusCode);
+        _livroExterno.Verify(s => s.ObterPorIsbnAsync(It.IsAny<string>()), Times.Never);
+        _livroRepository.Verify(r => r.AdicionarAsync(It.IsAny<LivroEntity>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Adicionar_IsbnInexistenteNoExterno_DeveRetornar404ENaoSalvar()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        _livroExterno.Setup(s => s.ObterPorIsbnAsync(It.IsAny<string>())).ThrowsAsync(new NoContentException("sem livro"));
+
+        // Act
+        var resultado = await _useCase.AdicionarAsync(NovoLivro());
+
+        // Assert
+        Assert.Equal(404, resultado.StatusCode);
+        _livroRepository.Verify(r => r.AdicionarAsync(It.IsAny<LivroEntity>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Adicionar_ServicoExternoFora_DeveRetornar502ENaoSalvar()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        _livroExterno.Setup(s => s.ObterPorIsbnAsync(It.IsAny<string>())).ThrowsAsync(new ServicoExternoException("indisponível"));
+
+        // Act
+        var resultado = await _useCase.AdicionarAsync(NovoLivro());
+
+        // Assert
+        Assert.Equal(502, resultado.StatusCode);
+        _livroRepository.Verify(r => r.AdicionarAsync(It.IsAny<LivroEntity>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Adicionar_SemAnoNemNoExterno_DeveRetornar400()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        _livroExterno.Setup(s => s.ObterPorIsbnAsync(It.IsAny<string>()))
+            .ReturnsAsync(new EdicaoLivroModel { Isbn = "9788535902778", Titulo = "Externo" });
+        var dto = NovoLivro();
+        dto.AnoPublicacao = null;
+
+        // Act
+        var resultado = await _useCase.AdicionarAsync(dto);
+
+        // Assert
+        Assert.Equal(400, resultado.StatusCode);
+        _livroRepository.Verify(r => r.AdicionarAsync(It.IsAny<LivroEntity>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Editar_SemTituloEAno_DevePreencherComDadosExternos()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        ConfigurarIsbnExterno();
+        _livroRepository.Setup(r => r.ObterUmAsync(5)).ReturnsAsync(new LivroEntity { Id = 5 });
+        var dto = NovoLivro();
+        dto.Titulo = null;
+        dto.AnoPublicacao = null;
+
+        // Act
+        var resultado = await _useCase.EditarAsync(5, dto);
+
+        // Assert
+        Assert.Equal(200, resultado.StatusCode);
+        _livroRepository.Verify(r => r.EditarAsync(5, It.Is<LivroEntity>(e => e.Titulo == "Título Externo" && e.AnoPublicacao == 2002)), Times.Once);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Editar_IsbnDeOutroLivro_DeveRetornar409ComIdIgnorado()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        _livroRepository.Setup(r => r.IsbnExisteAsync("9788535902778", 5)).ReturnsAsync(true);
+
+        // Act
+        var resultado = await _useCase.EditarAsync(5, NovoLivro());
+
+        // Assert
+        Assert.Equal(409, resultado.StatusCode);
+        _livroExterno.Verify(s => s.ObterPorIsbnAsync(It.IsAny<string>()), Times.Never);
+        _livroRepository.Verify(r => r.EditarAsync(It.IsAny<int>(), It.IsAny<LivroEntity>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task Editar_ServicoExternoFora_DeveRetornar502()
+    {
+        // Arrange
+        _autorRepository.Setup(r => r.ObterUmAsync(1)).ReturnsAsync(new AutorEntity { Id = 1 });
+        _categoriaRepository.Setup(r => r.ObterUmAsync(2)).ReturnsAsync(new CategoriaEntity { Id = 2 });
+        _livroExterno.Setup(s => s.ObterPorIsbnAsync(It.IsAny<string>())).ThrowsAsync(new ServicoExternoException("indisponível"));
+
+        // Act
+        var resultado = await _useCase.EditarAsync(5, NovoLivro());
+
+        // Assert
+        Assert.Equal(502, resultado.StatusCode);
+        _livroRepository.Verify(r => r.EditarAsync(It.IsAny<int>(), It.IsAny<LivroEntity>()), Times.Never);
+    }
+
+    private void ConfigurarIsbnExterno() =>
+        _livroExterno.Setup(s => s.ObterPorIsbnAsync(It.IsAny<string>()))
+            .ReturnsAsync(new EdicaoLivroModel { Isbn = "9788535902778", Titulo = "Título Externo", AnoPublicacao = 2002 });
+
+    private void ConfigurarAdicionar()
+    {
         _livroRepository.Setup(r => r.AdicionarAsync(It.IsAny<LivroEntity>()))
             .ReturnsAsync((LivroEntity e) => { e.Id = 10; return e; });
         _livroRepository.Setup(r => r.ObterUmAsync(10)).ReturnsAsync(new LivroEntity
@@ -51,14 +235,6 @@ public class LivroUseCaseTests
             Autor = new AutorEntity { Nome = "Machado" },
             Categoria = new CategoriaEntity { Nome = "Romance" }
         });
-
-        // Act
-        var resultado = await _useCase.AdicionarAsync(NovoLivro());
-
-        // Assert
-        Assert.Equal(201, resultado.StatusCode);
-        Assert.Equal("Machado", resultado.Value?.Autor);
-        Assert.Equal("Romance", resultado.Value?.Categoria);
     }
 
     [Fact]

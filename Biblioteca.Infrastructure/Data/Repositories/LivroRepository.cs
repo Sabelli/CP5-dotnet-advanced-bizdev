@@ -55,6 +55,18 @@ public class LivroRepository : ILivroRepository
         catch (Exception ex) { throw new Exception(ex.Message, ex); }
     }
 
+    public async Task<bool> IsbnExisteAsync(string isbn, int? ignorarId = null)
+    {
+        try
+        {
+            var query = _context.Livro.AsNoTracking().Where(x => x.Isbn == isbn);
+            if (ignorarId is int id) query = query.Where(x => x.Id != id);
+            // CountAsync em vez de AnyAsync: o provider Oracle gera "CASE WHEN EXISTS ... THEN True" e falha com ORA-00904.
+            return await query.CountAsync() > 0;
+        }
+        catch (Exception ex) { throw new Exception(ex.Message, ex); }
+    }
+
     public async Task<LivroEntity> AdicionarAsync(LivroEntity entity)
     {
         try

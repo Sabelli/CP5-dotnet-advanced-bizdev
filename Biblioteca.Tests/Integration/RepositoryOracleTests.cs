@@ -107,6 +107,32 @@ public class RepositoryOracleTests : IntegracaoBase
 
     [Fact]
     [Trait("Integracao", "Repository")]
+    public async Task Livro_IsbnExiste_DeveIgnorarOProprioIdQuandoInformado()
+    {
+        // Arrange
+        using var scope = Factory.Services.CreateScope();
+        var autores = scope.ServiceProvider.GetRequiredService<IAutorRepository>();
+        var categorias = scope.ServiceProvider.GetRequiredService<ICategoriaRepository>();
+        var livros = scope.ServiceProvider.GetRequiredService<ILivroRepository>();
+
+        var autor = await autores.AdicionarAsync(new AutorEntity { Nome = "Autor Isbn Teste" });
+        RegistrarAutor(autor.Id);
+        var categoria = await categorias.AdicionarAsync(new CategoriaEntity { Nome = "Cat Isbn Teste" });
+        RegistrarCategoria(categoria.Id);
+        var livro = await livros.AdicionarAsync(new LivroEntity
+        {
+            Isbn = "9780000000028", Titulo = "Livro Isbn", AnoPublicacao = 2001, AutorId = autor.Id, CategoriaId = categoria.Id
+        });
+        RegistrarLivro(livro.Id);
+
+        // Act / Assert
+        Assert.True(await livros.IsbnExisteAsync("9780000000028"));
+        Assert.False(await livros.IsbnExisteAsync("9780000000028", livro.Id));
+        Assert.False(await livros.IsbnExisteAsync("9780000000999"));
+    }
+
+    [Fact]
+    [Trait("Integracao", "Repository")]
     public async Task Emprestimo_LivroEmprestadoAsync_RefleteEmprestimoAbertoEDevolucao()
     {
         // Arrange

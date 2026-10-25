@@ -132,17 +132,23 @@ public class LivroController : ControllerBase
         ## Informações do Retorno:
         * **Status 201 (Created):** Livro criado.
         * **Status 400 (Bad Request):** Dados inválidos.
-        * **Status 404 (Not Found):** Autor ou categoria não encontrado.
+        * **Status 404 (Not Found):** Autor, categoria ou ISBN não encontrado.
+        * **Status 409 (Conflict):** ISBN já cadastrado.
+        * **Status 502 (Bad Gateway):** Serviço externo indisponível.
 
         ## Observações:
         * Requer autenticação com perfil **admin**.
         * **AutorId** e **CategoriaId** devem referenciar registros existentes.
+        * O ISBN é validado no serviço externo.
+        * **Titulo** e **AnoPublicacao** são opcionais: se omitidos, são preenchidos com os dados do serviço externo.
         """
     )]
     [SwaggerRequestExample(typeof(PostLivroDto), typeof(LivroRequestSample))]
     [SwaggerResponse(statusCode: 201, description: "Livro criado", type: typeof(GetLivroDto))]
     [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
-    [SwaggerResponse(statusCode: 404, description: "Autor ou categoria não encontrado", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Autor, categoria ou ISBN não encontrado", type: typeof(string))]
+    [SwaggerResponse(statusCode: 409, description: "ISBN já cadastrado", type: typeof(string))]
+    [SwaggerResponse(statusCode: 502, description: "Serviço externo indisponível", type: typeof(string))]
     [SwaggerResponseExample(statusCode: 201, typeof(LivroResponseSample))]
     public async Task<IActionResult> Post([FromBody] PostLivroDto dto)
     {
@@ -165,16 +171,22 @@ public class LivroController : ControllerBase
         ## Informações do Retorno:
         * **Status 200 (OK):** Livro atualizado.
         * **Status 400 (Bad Request):** Dados inválidos.
-        * **Status 404 (Not Found):** Livro não encontrado.
+        * **Status 404 (Not Found):** Livro, autor, categoria ou ISBN não encontrado.
+        * **Status 409 (Conflict):** ISBN já cadastrado em outro livro.
+        * **Status 502 (Bad Gateway):** Serviço externo indisponível.
 
         ## Observações:
         * Requer autenticação com perfil **admin**.
+        * O ISBN é validado no serviço externo.
+        * **Titulo** e **AnoPublicacao** são opcionais: se omitidos, são preenchidos com os dados do serviço externo.
         """
     )]
     [SwaggerRequestExample(typeof(PostLivroDto), typeof(LivroRequestSample))]
     [SwaggerResponse(statusCode: 200, description: "Livro atualizado", type: typeof(GetLivroDto))]
     [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
-    [SwaggerResponse(statusCode: 404, description: "Livro não encontrado", type: typeof(string))]
+    [SwaggerResponse(statusCode: 404, description: "Livro, autor, categoria ou ISBN não encontrado", type: typeof(string))]
+    [SwaggerResponse(statusCode: 409, description: "ISBN já cadastrado em outro livro", type: typeof(string))]
+    [SwaggerResponse(statusCode: 502, description: "Serviço externo indisponível", type: typeof(string))]
     [SwaggerResponseExample(statusCode: 200, typeof(LivroResponseSample))]
     public async Task<IActionResult> Put([FromRoute, SwaggerParameter("Id do livro")] int id, [FromBody] PostLivroDto dto)
     {

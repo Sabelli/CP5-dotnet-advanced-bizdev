@@ -89,6 +89,7 @@ public class LivroUseCase : ILivroUseCase
         {
             await _autorRepository.ObterUmAsync(dto.AutorId);
             await _categoriaRepository.ObterUmAsync(dto.CategoriaId);
+            await ValidarIsbnECompletarAsync(dto);
 
             var added = await _repository.AdicionarAsync(dto.ToLivroEntity());
             var result = await _repository.ObterUmAsync(added.Id);
@@ -97,6 +98,20 @@ public class LivroUseCase : ILivroUseCase
         catch (NoContentException ex)
         {
             return OperationResult<GetLivroDto>.Failure(ex.Message, (int)HttpStatusCode.NotFound);
+        }
+        catch (ConflitoException ex)
+        {
+            _logger.LogWarning("Cadastro de livro recusado: {0}", ex.Message);
+            return OperationResult<GetLivroDto>.Failure(ex.Message, (int)HttpStatusCode.Conflict);
+        }
+        catch (ServicoExternoException ex)
+        {
+            _logger.LogWarning("Serviço externo indisponível para ISBN {0}: {1}", dto.Isbn, ex.Message);
+            return OperationResult<GetLivroDto>.Failure(ex.Message, (int)HttpStatusCode.BadGateway);
+        }
+        catch (RequisicaoInvalidaException ex)
+        {
+            return OperationResult<GetLivroDto>.Failure(ex.Message, (int)HttpStatusCode.BadRequest);
         }
         catch (Exception ex)
         {
@@ -111,6 +126,7 @@ public class LivroUseCase : ILivroUseCase
         {
             await _autorRepository.ObterUmAsync(dto.AutorId);
             await _categoriaRepository.ObterUmAsync(dto.CategoriaId);
+            await ValidarIsbnECompletarAsync(dto, Id);
 
             await _repository.EditarAsync(Id, dto.ToLivroEntity());
             var result = await _repository.ObterUmAsync(Id);
@@ -120,11 +136,39 @@ public class LivroUseCase : ILivroUseCase
         {
             return OperationResult<GetLivroDto>.Failure(ex.Message, (int)HttpStatusCode.NotFound);
         }
+        catch (ConflitoException ex)
+        {
+            _logger.LogWarning("Edição de livro recusada: {0}", ex.Message);
+            return OperationResult<GetLivroDto>.Failure(ex.Message, (int)HttpStatusCode.Conflict);
+        }
+        catch (ServicoExternoException ex)
+        {
+            _logger.LogWarning("Serviço externo indisponível para ISBN {0}: {1}", dto.Isbn, ex.Message);
+            return OperationResult<GetLivroDto>.Failure(ex.Message, (int)HttpStatusCode.BadGateway);
+        }
+        catch (RequisicaoInvalidaException ex)
+        {
+            return OperationResult<GetLivroDto>.Failure(ex.Message, (int)HttpStatusCode.BadRequest);
+        }
         catch (Exception ex)
         {
             _logger.LogError("[ERROR] - {0}", ex.Message);
             return OperationResult<GetLivroDto>.Failure("Ocorreu um erro ao editar o livro", (int)HttpStatusCode.BadRequest);
         }
+    }
+
+    private async Task ValidarIsbnECompletarAsync(PostLivroDto dto, int? ignorarId = null)
+    {
+        if (await _repository.IsbnExisteAsync(dto.Isbn, ignorarId))
+            throw new ConflitoException($"Já existe livro cadastrado com o ISBN {dto.Isbn}.");
+
+        var externo = await _livroExternoService.ObterPorIsbnAsync(dto.Isbn);
+
+        if (string.IsNullOrWhiteSpace(dto.Titulo)) dto.Titulo = externo.Titulo;
+        dto.AnoPublicacao ??= externo.AnoPublicacao;
+
+        if (string.IsNullOrWhiteSpace(dto.Titulo) || dto.AnoPublicacao is null)
+            throw new RequisicaoInvalidaException("Título ou ano de publicação não informado e não encontrado na consulta externa.");
     }
 
     public async Task<OperationResult<GetLivroDto>> DeletarAsync(int Id)

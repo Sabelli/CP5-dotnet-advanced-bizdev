@@ -344,8 +344,8 @@ Todas exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth` e `/he
 | GET | `/api/livro` | Lista livros (paginado) | autenticado | 200 / 204 / 429 |
 | GET | `/api/livro/{id}` | Busca livro por id | autenticado | 200 / 404 |
 | GET | `/api/livro/isbn/{isbn}` | Consulta o livro no serviço externo (Open Library) | autenticado | 200 / 404 (ISBN não encontrado) / 400 / 502 (serviço externo indisponível) |
-| POST | `/api/livro` | Cria livro | admin | 201 / 404 (autor ou categoria inexistente) / 400 / 403 |
-| PUT | `/api/livro/{id}` | Atualiza livro | admin | 200 / 404 / 400 / 403 |
+| POST | `/api/livro` | Cria livro | admin | 201 / 404 (autor, categoria ou ISBN inexistente) / 409 (ISBN já cadastrado) / 400 / 403 / 502 (serviço externo indisponível) |
+| PUT | `/api/livro/{id}` | Atualiza livro | admin | 200 / 404 / 409 (ISBN já cadastrado em outro livro) / 400 / 403 / 502 (serviço externo indisponível) |
 | DELETE | `/api/livro/{id}` | Remove livro | admin | 200 / 404 / 403 |
 
 **POST / PUT — Body:**
@@ -358,6 +358,8 @@ Todas exigem `Authorization: Bearer <jwt>`, exceto `api/user`, `api/auth` e `/he
   "categoriaId": 1
 }
 ```
+
+> `titulo` e `anoPublicacao` são opcionais: se omitidos, são preenchidos com os dados da Open Library. O que o cliente enviar prevalece.
 
 ---
 
@@ -397,7 +399,7 @@ A demonstração completa (Swagger com CRUD, `dotnet test` verde, erros 404/204/
 ## Observações
 
 - Livro já emprestado não pode ser emprestado de novo (409) e empréstimo já devolvido não pode ser devolvido outra vez (409).
-- `POST /api/livro` valida a existência de Autor e Categoria; se algum não existir, retorna 404.
+- `POST` e `PUT /api/livro` validam a existência de Autor e Categoria (404), recusam ISBN já cadastrado (409, checado antes da consulta externa) e consultam o ISBN na Open Library: ISBN inexistente retorna 404 e serviço externo fora retorna 502, sem salvar.
 - E-mail de usuário é único (índice no banco e checagem na aplicação), com 409 em duplicata.
 - Todas as respostas usam DTOs dedicados (`Get*Dto`), nunca a entidade EF crua.
 - Repositories usam `AsNoTracking` e lançam `NoContentException`, que os UseCases convertem em `OperationResult`.

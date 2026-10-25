@@ -6,6 +6,7 @@ public interface ILivroRepository
 {
     Task<(IEnumerable<LivroEntity> data, int rowsCount)> ObterTodosAsync(int Deslocamento = 0, int RegistroRetornado = 30);
     Task<LivroEntity> ObterUmAsync(int Id);
+    Task<bool> IsbnExisteAsync(string isbn, int? ignorarId = null);
     Task<LivroEntity> AdicionarAsync(LivroEntity entity);
     Task<LivroEntity> EditarAsync(int Id, LivroEntity entity);
     Task<LivroEntity> DeletarAsync(int Id);

@@ -9,8 +9,8 @@ public static class LivroMapper
         new()
         {
             Isbn = obj.Isbn,
-            Titulo = obj.Titulo,
-            AnoPublicacao = obj.AnoPublicacao,
+            Titulo = obj.Titulo!,
+            AnoPublicacao = obj.AnoPublicacao!.Value,
             AutorId = obj.AutorId,
             CategoriaId = obj.CategoriaId
         };
