@@ -1,3 +1,18 @@
 <Solution>
-  <Project Path="Biblioteca.API/Biblioteca.API.csproj" />
+  <Folder Name="/0 - Presentation/">
+    <Project Path="Biblioteca.API/Biblioteca.API.csproj" />
+  </Folder>
+  <Folder Name="/1 - Application/">
+    <Project Path="Biblioteca.Application/Biblioteca.Application.csproj" />
+  </Folder>
+  <Folder Name="/2 - Domain/">
+    <Project Path="Biblioteca.Domain/Biblioteca.Domain.csproj" />
+  </Folder>
+  <Folder Name="/3 - Infrastructure/">
+    <Project Path="Biblioteca.Infrastructure/Biblioteca.Infrastructure.csproj" />
+    <Project Path="Biblioteca.IoC/Biblioteca.IoC.csproj" />
+  </Folder>
+  <Folder Name="/4 - Tests/">
+    <Project Path="Biblioteca.Tests/Biblioteca.Tests.csproj" />
+  </Folder>
 </Solution>
