@@ -147,11 +147,11 @@ public class LivroUseCase : ILivroUseCase
 
     public async Task<OperationResult<EdicaoLivroModel>> ObterPorIsbnAsync(string isbn)
     {
-        if (string.IsNullOrWhiteSpace(isbn))
-            return OperationResult<EdicaoLivroModel>.Failure("O ISBN é obrigatório", (int)HttpStatusCode.BadRequest);
-
         try
         {
+            if (string.IsNullOrWhiteSpace(isbn))
+                throw new RequisicaoInvalidaException("ISBN não informado.");
+
             _logger.LogInformation("Iniciando o ObterPorIsbnAsync na camada de application");
             var result = await _livroExternoService.ObterPorIsbnAsync(isbn);
             return OperationResult<EdicaoLivroModel>.Success(result, (int)HttpStatusCode.OK);
@@ -160,6 +160,15 @@ public class LivroUseCase : ILivroUseCase
         {
             _logger.LogWarning("Não retornou livro externo para ISBN: {0}", isbn);
             return OperationResult<EdicaoLivroModel>.Failure(ex.Message, (int)HttpStatusCode.NotFound);
+        }
+        catch (RequisicaoInvalidaException ex)
+        {
+            return OperationResult<EdicaoLivroModel>.Failure(ex.Message, (int)HttpStatusCode.BadRequest);
+        }
+        catch (ServicoExternoException ex)
+        {
+            _logger.LogWarning("Serviço externo indisponível para ISBN {0}: {1}", isbn, ex.Message);
+            return OperationResult<EdicaoLivroModel>.Failure(ex.Message, (int)HttpStatusCode.BadGateway);
         }
         catch (Exception ex)
         {

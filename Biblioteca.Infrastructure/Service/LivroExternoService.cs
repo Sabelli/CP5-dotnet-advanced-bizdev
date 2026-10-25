@@ -33,7 +33,7 @@ public class LivroExternoService : ILivroExternoService
         if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
         {
             _logger.LogWarning("OpenLibrary falhou para o ISBN {0}: {1}", isbn, response.StatusCode);
-            throw new NoContentException($"Não foi possível consultar o ISBN {isbn} no serviço externo");
+            throw new ServicoExternoException("Serviço de consulta de livros indisponível. Tente novamente mais tarde.");
         }
 
         using var doc = JsonDocument.Parse(response.Content);

@@ -4,10 +4,10 @@ namespace Biblioteca.Application.Dtos;
 
 public class PostAuthDto
 {
-    [Required]
-    [EmailAddress]
+    [Required(ErrorMessage = "O e-mail é obrigatório.")]
+    [EmailAddress(ErrorMessage = "E-mail inválido.")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
+    [Required(ErrorMessage = "A senha é obrigatória.")]
     public string Senha { get; set; } = string.Empty;
 }

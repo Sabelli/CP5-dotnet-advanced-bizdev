@@ -69,6 +69,7 @@ public class LivroController : ControllerBase
         * **Status 200 (OK):** Dados do livro.
         * **Status 400 (Bad Request):** ISBN inválido ou erro na consulta.
         * **Status 404 (Not Found):** ISBN não encontrado.
+        * **Status 502 (Bad Gateway):** Serviço externo indisponível.
 
         ## Observações:
         * Requer autenticação (JWT Bearer).
@@ -78,6 +79,7 @@ public class LivroController : ControllerBase
     [SwaggerResponse(statusCode: 200, description: "Dados do livro", type: typeof(EdicaoLivroModel))]
     [SwaggerResponse(statusCode: 400, description: "ISBN inválido ou erro na consulta", type: typeof(string))]
     [SwaggerResponse(statusCode: 404, description: "ISBN não encontrado", type: typeof(string))]
+    [SwaggerResponse(statusCode: 502, description: "Serviço externo indisponível", type: typeof(string))]
     [SwaggerResponseExample(statusCode: 200, typeof(LivroIsbnResponseSample))]
     public async Task<IActionResult> GetPorIsbn([FromRoute, SwaggerParameter("ISBN do livro")] string isbn)
     {

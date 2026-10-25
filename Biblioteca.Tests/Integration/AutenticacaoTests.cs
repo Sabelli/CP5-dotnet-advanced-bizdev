@@ -81,7 +81,7 @@ public class AutenticacaoTests : IntegracaoBase
 
     [Fact]
     [Trait("Integracao", "Auth")]
-    public async Task Login_SenhaErrada_DeveRetornar404()
+    public async Task Login_SenhaErrada_DeveRetornar401()
     {
         // Arrange
         using var anonimo = Factory.CreateClient();
@@ -90,7 +90,7 @@ public class AutenticacaoTests : IntegracaoBase
         var response = await anonimo.PostAsJsonAsync("api/auth", new PostAuthDto { Email = EmailAdmin, Senha = "errada" });
 
         // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]

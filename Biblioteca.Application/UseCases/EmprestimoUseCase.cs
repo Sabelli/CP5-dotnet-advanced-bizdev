@@ -84,7 +84,7 @@ public class EmprestimoUseCase : IEmprestimoUseCase
             await _livroRepository.ObterUmAsync(dto.LivroId);
 
             if (await _repository.LivroEmprestadoAsync(dto.LivroId))
-                return OperationResult<GetEmprestimoDto>.Failure($"O livro {dto.LivroId} já está emprestado", (int)HttpStatusCode.Conflict);
+                throw new ConflitoException($"O livro {dto.LivroId} já está emprestado.");
 
             var added = await _repository.AdicionarAsync(dto.ToEmprestimoEntity());
             var result = await _repository.ObterUmAsync(added.Id);
@@ -93,6 +93,11 @@ public class EmprestimoUseCase : IEmprestimoUseCase
         catch (NoContentException ex)
         {
             return OperationResult<GetEmprestimoDto>.Failure(ex.Message, (int)HttpStatusCode.NotFound);
+        }
+        catch (ConflitoException ex)
+        {
+            _logger.LogWarning("Empréstimo recusado: {0}", ex.Message);
+            return OperationResult<GetEmprestimoDto>.Failure(ex.Message, (int)HttpStatusCode.Conflict);
         }
         catch (Exception ex)
         {
@@ -108,7 +113,7 @@ public class EmprestimoUseCase : IEmprestimoUseCase
             var atual = await _repository.ObterUmAsync(Id);
 
             if (atual.DataDevolucao != null)
-                return OperationResult<GetEmprestimoDto>.Failure($"O empréstimo {Id} já foi devolvido", (int)HttpStatusCode.Conflict);
+                throw new ConflitoException($"O empréstimo {Id} já foi devolvido.");
 
             await _repository.DevolverAsync(Id);
             var result = await _repository.ObterUmAsync(Id);
@@ -117,6 +122,11 @@ public class EmprestimoUseCase : IEmprestimoUseCase
         catch (NoContentException ex)
         {
             return OperationResult<GetEmprestimoDto>.Failure(ex.Message, (int)HttpStatusCode.NotFound);
+        }
+        catch (ConflitoException ex)
+        {
+            _logger.LogWarning("Devolução recusada: {0}", ex.Message);
+            return OperationResult<GetEmprestimoDto>.Failure(ex.Message, (int)HttpStatusCode.Conflict);
         }
         catch (Exception ex)
         {

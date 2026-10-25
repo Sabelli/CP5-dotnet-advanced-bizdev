@@ -139,6 +139,21 @@ public class LivroUseCaseTests
         Assert.Equal(404, resultado.StatusCode);
     }
 
+    [Fact]
+    [Trait("UseCase", "Livro")]
+    public async Task ObterPorIsbn_ServicoExternoFora_DeveRetornar502ComMensagem()
+    {
+        // Arrange
+        _livroExterno.Setup(s => s.ObterPorIsbnAsync("123")).ThrowsAsync(new ServicoExternoException("Serviço de consulta de livros indisponível."));
+
+        // Act
+        var resultado = await _useCase.ObterPorIsbnAsync("123");
+
+        // Assert
+        Assert.Equal(502, resultado.StatusCode);
+        Assert.Equal("Serviço de consulta de livros indisponível.", resultado.Error);
+    }
+
     [Theory]
     [Trait("UseCase", "Livro")]
     [InlineData("")]

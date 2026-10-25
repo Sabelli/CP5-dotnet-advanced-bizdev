@@ -65,6 +65,24 @@ public class UserUseCaseTests
 
         // Assert
         Assert.Equal(409, resultado.StatusCode);
+        Assert.Equal("E-mail já cadastrado.", resultado.Error);
+        _repository.Verify(r => r.AdicionarAsync(It.IsAny<UserEntity>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("UseCase", "User")]
+    public async Task Adicionar_EmailInvalido_DeveRetornar400ComMensagem()
+    {
+        // Arrange
+        var dto = NovoUsuario();
+        dto.Email = "email-invalido";
+
+        // Act
+        var resultado = await _useCase.AdicionarUserAsync(dto);
+
+        // Assert
+        Assert.Equal(400, resultado.StatusCode);
+        Assert.Equal("E-mail inválido.", resultado.Error);
         _repository.Verify(r => r.AdicionarAsync(It.IsAny<UserEntity>()), Times.Never);
     }
 
@@ -87,7 +105,7 @@ public class UserUseCaseTests
 
     [Fact]
     [Trait("UseCase", "User")]
-    public async Task Autentica_SenhaErrada_DeveRetornar404()
+    public async Task Autentica_SenhaErrada_DeveRetornar401()
     {
         // Arrange
         _repository.Setup(r => r.ObterPorEmailAsync("ana@teste.com"))
@@ -97,13 +115,14 @@ public class UserUseCaseTests
         var resultado = await _useCase.AutenticaUserAsync(new PostAuthDto { Email = "ana@teste.com", Senha = "errada" });
 
         // Assert
-        Assert.Equal(404, resultado.StatusCode);
+        Assert.Equal(401, resultado.StatusCode);
+        Assert.Equal("E-mail ou senha incorretos.", resultado.Error);
         _tokenService.Verify(t => t.GerarToken(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
     [Trait("UseCase", "User")]
-    public async Task Autentica_EmailInexistente_DeveRetornar404()
+    public async Task Autentica_EmailInexistente_DeveRetornar401()
     {
         // Arrange
         _repository.Setup(r => r.ObterPorEmailAsync(It.IsAny<string>())).ThrowsAsync(new NoContentException("Usuário não encontrado"));
@@ -112,7 +131,8 @@ public class UserUseCaseTests
         var resultado = await _useCase.AutenticaUserAsync(new PostAuthDto { Email = "x@x.com", Senha = "123456" });
 
         // Assert
-        Assert.Equal(404, resultado.StatusCode);
+        Assert.Equal(401, resultado.StatusCode);
+        Assert.Equal("E-mail ou senha incorretos.", resultado.Error);
     }
 }
 

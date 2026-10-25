@@ -31,7 +31,7 @@ public class AuthController : ControllerBase
         ## Informações do Retorno:
         * **Status 200 (OK):** Autenticado.
         * **Status 400 (Bad Request):** Dados inválidos.
-        * **Status 404 (Not Found):** Usuário ou senha inválidos.
+        * **Status 401 (Unauthorized):** E-mail ou senha incorretos.
 
         ## Observações:
         * Endpoint público, não exige autenticação.
@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
     [SwaggerRequestExample(typeof(PostAuthDto), typeof(AuthRequestSample))]
     [SwaggerResponse(statusCode: 200, description: "Autenticado", type: typeof(GetAuthDto))]
     [SwaggerResponse(statusCode: 400, description: "Dados inválidos", type: typeof(string))]
-    [SwaggerResponse(statusCode: 404, description: "Usuário ou senha inválidos", type: typeof(string))]
+    [SwaggerResponse(statusCode: 401, description: "E-mail ou senha incorretos", type: typeof(string))]
     [SwaggerResponseExample(statusCode: 200, typeof(AuthResponseSample))]
     public async Task<IActionResult> Post([FromBody] PostAuthDto model)
     {

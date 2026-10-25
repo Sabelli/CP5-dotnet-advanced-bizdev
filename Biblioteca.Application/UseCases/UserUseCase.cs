@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Mail;
 using Biblioteca.Application.Dtos;
 using Biblioteca.Application.Interfaces;
 using Biblioteca.Application.Mappers;
@@ -27,11 +28,23 @@ public class UserUseCase : IUserUseCase
     {
         try
         {
+            if (!MailAddress.TryCreate(dto.Email, out _))
+                throw new RequisicaoInvalidaException("E-mail inválido.");
+
             if (await EmailExisteAsync(dto.Email))
-                return OperationResult<GetUserDto>.Failure($"Já existe usuário com o e-mail {dto.Email}", (int)HttpStatusCode.Conflict);
+                throw new ConflitoException("E-mail já cadastrado.");
 
             var result = await _userRepository.AdicionarAsync(dto.ToUserEntity(SenhaHasher.Gerar(dto.Password)));
             return OperationResult<GetUserDto>.Success(result.ToUserDto(), (int)HttpStatusCode.Created);
+        }
+        catch (RequisicaoInvalidaException ex)
+        {
+            return OperationResult<GetUserDto>.Failure(ex.Message, (int)HttpStatusCode.BadRequest);
+        }
+        catch (ConflitoException ex)
+        {
+            _logger.LogWarning("Cadastro recusado: {0}", ex.Message);
+            return OperationResult<GetUserDto>.Failure(ex.Message, (int)HttpStatusCode.Conflict);
         }
         catch (Exception ex)
         {
@@ -48,14 +61,14 @@ public class UserUseCase : IUserUseCase
 
             // Mesma resposta para e-mail inexistente e senha errada, para não revelar quais e-mails existem.
             if (!SenhaHasher.Verificar(dto.Senha, user.PasswordHash))
-                throw new NoContentException("Usuário ou senha inválidos");
+                throw new NaoAutorizadoException("E-mail ou senha incorretos.");
 
             var auth = new GetAuthDto { Email = user.Email, Jwt = _tokenService.GerarToken(user.Email, user.Role) };
             return OperationResult<GetAuthDto>.Success(auth, (int)HttpStatusCode.OK);
         }
-        catch (NoContentException)
+        catch (Exception ex) when (ex is NoContentException or NaoAutorizadoException)
         {
-            return OperationResult<GetAuthDto>.Failure("Usuário ou senha inválidos", (int)HttpStatusCode.NotFound);
+            return OperationResult<GetAuthDto>.Failure("E-mail ou senha incorretos.", (int)HttpStatusCode.Unauthorized);
         }
         catch (Exception ex)
         {
